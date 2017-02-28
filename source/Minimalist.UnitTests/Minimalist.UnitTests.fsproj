@@ -52,8 +52,9 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Detector.Tests.fs" />
-    <None Include="11b.dat" />
+    <EmbeddedResource Include="11b.dat" />
     <Content Include="packages.config" />
+    <Content Include="App.config" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

@@ -18,7 +18,6 @@ let loadTestData () =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (algorithm basic idea demonstration)`` () =
-    let data = loadTestData ()
     let maxes = findMaxes loadTestData
 
-    maxes |> should haveCount 12
+    maxes |> should haveLength 11
