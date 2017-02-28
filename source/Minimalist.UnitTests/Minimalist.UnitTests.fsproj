@@ -51,7 +51,8 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="DetectorTests.fs" />
+    <Compile Include="Detector.Tests.fs" />
+    <None Include="11b.dat" />
     <Content Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
@@ -75,6 +76,13 @@
     <Reference Include="System" />
     <Reference Include="System.Core" />
     <Reference Include="System.Numerics" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="..\Minimalist\Minimalist.fsproj">
+      <Name>Minimalist</Name>
+      <Project>{b6861077-74a5-4887-a94a-79ab8da557d0}</Project>
+      <Private>True</Private>
+    </ProjectReference>
   </ItemGroup>
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
