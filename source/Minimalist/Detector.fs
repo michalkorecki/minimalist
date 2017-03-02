@@ -38,6 +38,14 @@ let private find quotes =
             if max.Index > (maxIndex - shrinkingNeighbourhoodSize) then
                 let discardedNeighbourhoodSize = shrinkingNeighbourhoodSize / 2
                 let nextSearchBoundary = maxIndex - discardedNeighbourhoodSize
+                // when max is found in shrinked neighbourhood
+                // it should be asserted that several data points
+                // after such max must be lower
+                // otherwise, especially in strong trends we risk finding "max"
+                // that gets qualified only because if "fall out" of neighbourhood
+                // in other words, neighbourhood should have minimum size (i.e. 5?), 
+                // which when reached will be also used to check that 5-data points
+                // after max are lower
                 findMax (minIndex, nextSearchBoundary, unsuccessfulAttempts + 1) results neighbourhoodSize
             else
                 findMax (minIndex, max.Index, 0) (max::results) neighbourhoodSize
