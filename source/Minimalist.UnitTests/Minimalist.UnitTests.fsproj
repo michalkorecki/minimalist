@@ -55,6 +55,9 @@
     <EmbeddedResource Include="11b.dat" />
     <Content Include="packages.config" />
     <Content Include="App.config" />
+    <EmbeddedResource Include="11b.2016.txt" />
+    <EmbeddedResource Include="pgn.2016.txt" />
+    <EmbeddedResource Include="wwl.2016.txt" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="FSharp.Core">

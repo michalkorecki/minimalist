@@ -45,7 +45,7 @@ let private find quotes =
                 // that gets qualified only because if "fall out" of neighbourhood
                 // in other words, neighbourhood should have minimum size (i.e. 5?), 
                 // which when reached will be also used to check that 5-data points
-                // after max are lower
+                // after max are lower  
                 findMax (minIndex, nextSearchBoundary, unsuccessfulAttempts + 1) results neighbourhoodSize
             else
                 findMax (minIndex, max.Index, 0) (max::results) neighbourhoodSize
