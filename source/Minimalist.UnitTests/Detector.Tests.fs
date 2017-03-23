@@ -7,9 +7,10 @@ open System.IO
 open System.Reflection
 open Minimalist.Detector
 
-let loadTestData () =
+let loadTestData ticker = fun () ->
+    let file = sprintf "%s.2016.txt" ticker
     let assembly = Assembly.GetExecutingAssembly()
-    use resourceStream = assembly.GetManifestResourceStream("11b.2016.txt")
+    use resourceStream = assembly.GetManifestResourceStream(file)
     use reader = new StreamReader(resourceStream)
     reader
         .ReadToEnd()
@@ -21,17 +22,46 @@ let shouldOccurAt year month day quotation =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (algorithm basic idea demonstration)`` () =
-    let maxes = findMaxes loadTestData
+    let maxes = findMaxes (loadTestData "11b")
 
     maxes |> should haveLength 4
-//    maxes.[0] |> shouldOccurAt 2010 11 19
-//    maxes.[1] |> shouldOccurAt 2011 03 29
-//    maxes.[2] |> shouldOccurAt 2014 12 15
-//    maxes.[3] |> shouldOccurAt 2015 02 13
-//    maxes.[4] |> shouldOccurAt 2015 07 20
     maxes.[0] |> shouldOccurAt 2016 01 29
     maxes.[1] |> shouldOccurAt 2016 08 11
     maxes.[2] |> shouldOccurAt 2016 09 15
     maxes.[3] |> shouldOccurAt 2016 12 14
-//    maxes.[9] |> shouldOccurAt 2017 01 09
-//    maxes.[10] |> shouldOccurAt 2017 02 22
+
+[<Test>]
+let ``Maxes are found for 11B quotations (target detection)`` () =
+    let maxes = findMaxes (loadTestData "11b")
+
+    maxes |> should haveLength 7
+    maxes.[0] |> shouldOccurAt 2016 01 29
+    maxes.[1] |> shouldOccurAt 2016 03 21
+    maxes.[2] |> shouldOccurAt 2016 05 25
+    maxes.[3] |> shouldOccurAt 2016 07 26
+    maxes.[4] |> shouldOccurAt 2016 08 23
+    maxes.[5] |> shouldOccurAt 2016 09 15
+    maxes.[6] |> shouldOccurAt 2016 12 14
+
+[<Test>]
+let ``Maxes are found for PGN quotations (target detection)`` () =
+    let maxes = findMaxes (loadTestData "pgn")
+
+    maxes |> should haveLength 6
+    maxes.[0] |> shouldOccurAt 2016 01 04
+    maxes.[1] |> shouldOccurAt 2016 02 18
+    maxes.[2] |> shouldOccurAt 2016 03 31
+    maxes.[3] |> shouldOccurAt 2016 05 25
+    maxes.[4] |> shouldOccurAt 2016 07 20
+    maxes.[5] |> shouldOccurAt 2016 12 21
+
+[<Test>]
+let ``Maxes are found for WWL quotations (target detection)`` () =
+    let maxes = findMaxes (loadTestData "wwl")
+
+    maxes |> should haveLength 5
+    maxes.[0] |> shouldOccurAt 2016 01 04
+    maxes.[1] |> shouldOccurAt 2016 02 09
+    maxes.[2] |> shouldOccurAt 2016 04 25
+    maxes.[3] |> shouldOccurAt 2016 11 10
+    maxes.[4] |> shouldOccurAt 2016 12 30
