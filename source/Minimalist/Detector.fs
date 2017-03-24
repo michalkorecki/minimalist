@@ -20,38 +20,57 @@ let private buildQuotations fetchContentLines =
     |> Seq.mapi toQuotation
     |> Seq.toArray
 
-let private find quotes =
-    let rec findMax boundary (results : list<Quotation>) neighbourhoodSize =
-        let minIndex, maxIndex, unsuccessfulAttempts = boundary
-        let searchSpaceTooNarrow = (maxIndex - minIndex) < neighbourhoodSize
-        if searchSpaceTooNarrow then
+let private findMaxesImpl (quotes : Quotation[]) =
+    let rec findMaxInRange range (results : list<Quotation>) =
+        let rangeStartIndex, rangeEndIndex = range
+        let isExhausted = (rangeEndIndex - rangeStartIndex) < 1
+        if isExhausted then
             results
         else
-            let max = 
+            let maxInRange =
                 quotes 
-                |> Seq.skip minIndex
-                |> Seq.take (maxIndex - minIndex)
+                |> Seq.skip rangeStartIndex
+                |> Seq.take (rangeEndIndex - rangeStartIndex)
                 |> Seq.maxBy (fun q -> q.High)
 
-            let shirnkageFactor = if unsuccessfulAttempts = 0 then 1 else unsuccessfulAttempts * unsuccessfulAttempts
-            let shrinkingNeighbourhoodSize = neighbourhoodSize / shirnkageFactor
-            if max.Index > (maxIndex - shrinkingNeighbourhoodSize) then
-                let discardedNeighbourhoodSize = shrinkingNeighbourhoodSize / 2
-                let nextSearchBoundary = maxIndex - discardedNeighbourhoodSize
-                // when max is found in shrinked neighbourhood
-                // it should be asserted that several data points
-                // after such max must be lower
-                // otherwise, especially in strong trends we risk finding "max"
-                // that gets qualified only because if "fall out" of neighbourhood
-                // in other words, neighbourhood should have minimum size (i.e. 5?), 
-                // which when reached will be also used to check that 5-data points
-                // after max are lower  
-                findMax (minIndex, nextSearchBoundary, unsuccessfulAttempts + 1) results neighbourhoodSize
-            else
-                findMax (minIndex, max.Index, 0) (max::results) neighbourhoodSize
+            // walk backwards from max and track directional movement
+            // once movement direction changes, start searching for max
+            // from this point onwards
 
-    let max = quotes |> Seq.maxBy (fun q -> q.High)
-    let initialMaxes = findMax (0, max.Index, 0) [max] 20
+            // directional movement (aka trend)
+            // 1 - up
+            // 0 - no trend
+            //-1 - down
+
+            // at least 3 data points are needed to compute directional movement
+            let notEnoughDataPoints = maxInRange.Index <= rangeStartIndex + 3
+            if notEnoughDataPoints then
+                maxInRange::results
+            else
+                let rec directionalMovementChange rangeStart rangeEnd = 
+                    if rangeEnd <= rangeStart then
+                        rangeEnd
+                    else
+                        let m4 = quotes.[rangeEnd]
+                        let m3 = quotes.[rangeEnd - 1]
+                        let m2 = quotes.[rangeEnd - 2]
+                        let m1 = quotes.[rangeEnd - 3]
+                        let change3 = (m4.High - m3.High) / m4.High
+                        let change2 = (m4.High - m2.High) / m4.High
+                        let change1 = (m4.High - m1.High) / m4.High
+                        let weight = 0.5
+                        let average = change3 * (1.0 - weight) + change2 * (pown (1.0 - weight) 2) + change3 * (pown (1.0 - weight) 3)
+                        if average < 0.0 then
+                            rangeEnd
+                        else
+                            directionalMovementChange rangeStart (rangeEnd - 1)
+                let movementChangePoint = directionalMovementChange rangeStartIndex maxInRange.Index
+                if movementChangePoint > rangeStartIndex then
+                    findMaxInRange (rangeStartIndex, movementChangePoint) (maxInRange::results)
+                else
+                    maxInRange::results
+
+    let initialMaxes = findMaxInRange (0, (quotes.Length - 1)) []
     
     // possible qualifiers/scoring
     // 1) distance between subsequent maxes
@@ -79,7 +98,7 @@ let private find quotes =
     let secondaryMaxes = 
         ranges
         |> Seq.map (fun (start, finish) -> 
-            let maxes = findMax (start.Index + 20, finish.Index, 0) [] 10
+            let maxes = findMaxInRange (start.Index + 20, finish.Index) []
             (start, finish, maxes))
 
     initialMaxes
@@ -87,4 +106,4 @@ let private find quotes =
 let findMaxes (fetchContentLines : unit -> string[]) =
     fetchContentLines
     |> buildQuotations
-    |> find
+    |> findMaxesImpl
