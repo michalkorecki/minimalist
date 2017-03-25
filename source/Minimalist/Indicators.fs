@@ -10,3 +10,13 @@ let trueRange yesterday today =
 
     [todayHighLow;todayHighYesterdayClose;yesterdayCloseTodayLow] |> Seq.max
 
+let directionalMovement yesterday today =
+    let highsDistance = today.High - yesterday.High
+    let lowsDistance = yesterday.Low - today.Low
+    let max = max highsDistance lowsDistance
+
+    if max < 0.0 then
+        0.0
+    else
+        max
+    
