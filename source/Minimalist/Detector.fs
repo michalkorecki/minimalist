@@ -1,6 +1,7 @@
 ﻿module Minimalist.Detector
 
 open Minimalist.Data
+open Minimalist.Indicators
 open System
 open System.IO
 
@@ -18,37 +19,41 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 |> Seq.take (rangeEndIndex - rangeStartIndex)
                 |> Seq.maxBy (fun q -> q.High)
 
-            // walk backwards from max and track directional movement
-            // once movement direction changes, start searching for max
-            // from this point onwards
-
-            // directional movement (aka trend)
-            // 1 - up
-            // 0 - no trend
-            //-1 - down
-
             // at least 3 data points are needed to compute directional movement
-            let notEnoughDataPoints = maxInRange.Index <= rangeStartIndex + 3
+            let notEnoughDataPoints = maxInRange.Index <= rangeStartIndex + 6
             if notEnoughDataPoints then
                 maxInRange::results
             else
                 let rec directionalMovementChange rangeStart rangeEnd = 
-                    if rangeEnd <= rangeStart then
+                    if rangeStart + 6 > rangeEnd then
+                        rangeEnd
+                    else if rangeEnd <= rangeStart then
                         rangeEnd
                     else
-                        let m4 = quotes.[rangeEnd]
-                        let m3 = quotes.[rangeEnd - 1]
-                        let m2 = quotes.[rangeEnd - 2]
-                        let m1 = quotes.[rangeEnd - 3]
-                        let change3 = (m4.High - m3.High) / m4.High
-                        let change2 = (m4.High - m2.High) / m4.High
-                        let change1 = (m4.High - m1.High) / m4.High
-                        let weight = 0.5
-                        let average = change3 * (1.0 - weight) + change2 * (pown (1.0 - weight) 2) + change3 * (pown (1.0 - weight) 3)
-                        if average < 0.0 then
-                            rangeEnd
-                        else
+                        let q1 = quotes.[rangeEnd]
+                        let q2 = quotes.[rangeEnd - 1]
+                        let q3 = quotes.[rangeEnd - 2]
+                        let q4 = quotes.[rangeEnd - 3]
+                        let q5 = quotes.[rangeEnd - 4]
+                        let q6 = quotes.[rangeEnd - 5]
+                        let tr1 = trueRange q2 q1
+                        let tr2 = trueRange q3 q2
+                        let tr3 = trueRange q4 q3
+                        let tr4 = trueRange q5 q4
+                        let tr5 = trueRange q6 q5
+                        let tr = tr1 + tr2 + tr3 + tr4 + tr5
+                        let dms =
+                            [(q6,q5);(q5,q4);(q4,q3);(q3,q2);(q2,q1)]
+                            |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
+                        let dmPlus = dms |> Seq.filter (fun dm -> dm > 0.0) |> Seq.sum
+                        let dmMinus = dms |> Seq.filter (fun dm -> dm < 0.0) |> Seq.sum
+                        let dmiPlus = dmPlus / tr
+                        let dmiMinus = (dmMinus * -1.0) / tr
+                        if dmiPlus > dmiMinus then
                             directionalMovementChange rangeStart (rangeEnd - 1)
+                        else
+                            rangeEnd
+                            
                 let movementChangePoint = directionalMovementChange rangeStartIndex maxInRange.Index
                 if movementChangePoint > rangeStartIndex then
                     findMaxInRange (rangeStartIndex, movementChangePoint) (maxInRange::results)
