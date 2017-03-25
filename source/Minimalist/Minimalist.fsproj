@@ -45,6 +45,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Data.fs" />
+    <Compile Include="Indicators.fs" />
     <Compile Include="Detector.fs" />
   </ItemGroup>
   <PropertyGroup>
