@@ -1,24 +1,9 @@
 ﻿module Minimalist.Detector
 
+open Minimalist.Data
 open System
 open System.IO
 
-type Quotation = {
-    High : double;
-    Date : DateTime;
-    Index : int;
-}
-
-let private toQuotation (index : int) (line : string) =
-    let tokens = line.Split(',')
-    let high = Double.Parse(tokens.[2], System.Globalization.CultureInfo.InvariantCulture)
-    let date = DateTime.ParseExact(tokens.[0], "yyyyMMdd", null)
-    { High = high; Date = date; Index = index }
-
-let private buildQuotations fetchContentLines =
-    fetchContentLines()
-    |> Seq.mapi toQuotation
-    |> Seq.toArray
 
 let private findMaxesImpl (quotes : Quotation[]) =
     let rec findMaxInRange range (results : list<Quotation>) =
@@ -104,6 +89,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
     initialMaxes
 
 let findMaxes (fetchContentLines : unit -> string[]) =
-    fetchContentLines
-    |> buildQuotations
+    fetchContentLines()
+    |> Seq.mapi parse
+    |> Seq.toArray
     |> findMaxesImpl

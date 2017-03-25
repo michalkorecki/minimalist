@@ -5,6 +5,7 @@ open FsUnit
 open System
 open System.IO
 open System.Reflection
+open Minimalist.Data
 open Minimalist.Detector
 
 let loadTestData ticker = fun () ->
