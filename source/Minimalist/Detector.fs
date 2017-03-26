@@ -13,43 +13,43 @@ let private findMaxesImpl (quotes : Quotation[]) =
         if isExhausted then
             results
         else
+            let isRangeExhausted currentStart currentEnd =
+                currentStart + 5 > currentEnd
             let maxInRange =
                 quotes 
                 |> Seq.skip rangeStartIndex
                 |> Seq.take (rangeEndIndex - rangeStartIndex)
                 |> Seq.maxBy (fun q -> q.High)
 
-            // at least 3 data points are needed to compute directional movement
-            let notEnoughDataPoints = maxInRange.Index <= rangeStartIndex + 6
-            if notEnoughDataPoints then
+            if isRangeExhausted rangeStartIndex maxInRange.Index then
                 maxInRange::results
             else
-                let rec directionalMovementChange rangeStart rangeEnd = 
-                    if rangeStart + 6 > rangeEnd then
-                        rangeEnd
-                    else if rangeEnd <= rangeStart then
+                let rec directionalMovementChange rangeStart rangeEnd =
+                    //todo: fix recursion
+                    if isRangeExhausted rangeStart rangeEnd then
                         rangeEnd
                     else
-                        let q1 = quotes.[rangeEnd]
-                        let q2 = quotes.[rangeEnd - 1]
-                        let q3 = quotes.[rangeEnd - 2]
-                        let q4 = quotes.[rangeEnd - 3]
-                        let q5 = quotes.[rangeEnd - 4]
-                        let q6 = quotes.[rangeEnd - 5]
-                        let tr1 = trueRange q2 q1
-                        let tr2 = trueRange q3 q2
-                        let tr3 = trueRange q4 q3
-                        let tr4 = trueRange q5 q4
-                        let tr5 = trueRange q6 q5
-                        let tr = tr1 + tr2 + tr3 + tr4 + tr5
-                        let dms =
-                            [(q6,q5);(q5,q4);(q4,q3);(q3,q2);(q2,q1)]
+                        let pairs =
+                            quotes 
+                            |> Seq.skip (rangeEnd - 5)
+                            |> Seq.take 6
+                            |> Seq.pairwise
+                        let trueRange =
+                            pairs
+                            |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
+                            |> Seq.sum
+                        let dmPlus, dmMinus =
+                            pairs
                             |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
-                        let dmPlus = dms |> Seq.filter (fun dm -> dm > 0.0) |> Seq.sum
-                        let dmMinus = dms |> Seq.filter (fun dm -> dm < 0.0) |> Seq.sum
-                        let dmiPlus = dmPlus / tr
-                        let dmiMinus = (dmMinus * -1.0) / tr
-                        if dmiPlus > dmiMinus then
+                            |> Seq.fold (fun (plus, minus) element ->
+                                if element > 0.0 then
+                                    (plus + element, minus)
+                                else
+                                    (plus, minus + element)) (0.0, 0.0)
+
+                        let dmPlusIndicator = dmPlus / trueRange
+                        let dmMinusIndicator = (dmMinus * -1.0) / trueRange
+                        if dmPlusIndicator > dmMinusIndicator then
                             directionalMovementChange rangeStart (rangeEnd - 1)
                         else
                             rangeEnd
@@ -57,6 +57,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 let movementChangePoint = directionalMovementChange rangeStartIndex maxInRange.Index
                 if movementChangePoint > rangeStartIndex then
                     findMaxInRange (rangeStartIndex, movementChangePoint) (maxInRange::results)
+                //todo: is this ever called?
                 else
                     maxInRange::results
 

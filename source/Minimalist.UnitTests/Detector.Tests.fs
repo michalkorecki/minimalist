@@ -35,27 +35,29 @@ let ``Maxes are found for 11B quotations (algorithm basic idea demonstration)`` 
 let ``Maxes are found in bull trend movements for 11B quotations (partial detection)`` () =
     let maxes = findMaxes (loadTestData "11b")
 
-    maxes |> should haveLength 6
-    maxes.[0] |> shouldOccurAt 2016 01 13
-    maxes.[1] |> shouldOccurAt 2016 01 29
-    maxes.[2] |> shouldOccurAt 2016 07 26
-    maxes.[3] |> shouldOccurAt 2016 08 23
-    maxes.[4] |> shouldOccurAt 2016 09 15
-    maxes.[5] |> shouldOccurAt 2016 12 14
+    maxes |> should haveLength 7
+    maxes.[0] |> shouldOccurAt 2016 01 05
+    maxes.[1] |> shouldOccurAt 2016 01 13
+    maxes.[2] |> shouldOccurAt 2016 01 29
+    maxes.[3] |> shouldOccurAt 2016 07 26
+    maxes.[4] |> shouldOccurAt 2016 08 23
+    maxes.[5] |> shouldOccurAt 2016 09 15
+    maxes.[6] |> shouldOccurAt 2016 12 14
 
 [<Test>]
 let ``Maxes are found for 11B quotations (target detection)`` () =
     let maxes = findMaxes (loadTestData "11b")
 
-    maxes |> should haveLength 8
-    maxes.[0] |> shouldOccurAt 2016 01 13
-    maxes.[1] |> shouldOccurAt 2016 01 29
-    maxes.[2] |> shouldOccurAt 2016 03 21
-    maxes.[3] |> shouldOccurAt 2016 05 25
-    maxes.[4] |> shouldOccurAt 2016 07 26
-    maxes.[5] |> shouldOccurAt 2016 08 23
-    maxes.[6] |> shouldOccurAt 2016 09 15
-    maxes.[7] |> shouldOccurAt 2016 12 14
+    maxes |> should haveLength 9
+    maxes.[0] |> shouldOccurAt 2016 01 05
+    maxes.[1] |> shouldOccurAt 2016 01 13
+    maxes.[2] |> shouldOccurAt 2016 01 29
+    maxes.[3] |> shouldOccurAt 2016 03 21
+    maxes.[4] |> shouldOccurAt 2016 05 25
+    maxes.[5] |> shouldOccurAt 2016 07 26
+    maxes.[6] |> shouldOccurAt 2016 08 23
+    maxes.[7] |> shouldOccurAt 2016 09 15
+    maxes.[8] |> shouldOccurAt 2016 12 14
 
 [<Test>]
 let ``Maxes are found for PGN quotations (target detection)`` () =
