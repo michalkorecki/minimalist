@@ -7,6 +7,64 @@ open System.IO
 
 
 let private findMaxesImpl (quotes : Quotation[]) =
+    let rec findMaxInbetween range (results : list<Quotation>) =
+        let rangeStartIndex, rangeEndIndex = range
+        let isExhausted = (rangeEndIndex - rangeStartIndex) < 1
+        if isExhausted then
+            results
+        else
+            let isRangeExhausted currentStart currentEnd =
+                currentStart + 5 > currentEnd
+            let minBetweenMaxes =
+                quotes
+                |> Seq.skip rangeStartIndex
+                |> Seq.take (rangeEndIndex - rangeStartIndex + 1)
+                |> Seq.minBy (fun q -> q.Low)
+            
+            if isRangeExhausted rangeStartIndex minBetweenMaxes.Index then
+                results
+            else
+                let rec directionalMovementChange2 rangeStart rangeEnd =
+                    if rangeStart + 5 > rangeEnd then
+                        rangeStart
+                    else
+                        let pairs =
+                            quotes 
+                            |> Seq.skip rangeStart
+                            |> Seq.take 6
+                            |> Seq.pairwise
+                        let trueRange =
+                            pairs
+                            |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
+                            |> Seq.sum
+                        let dmPlus, dmMinus =
+                            pairs
+                            |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
+                            |> Seq.fold (fun (plus, minus) element ->
+                                if element > 0.0 then
+                                    (plus + element, minus)
+                                else
+                                    (plus, minus + element * -1.0)) (0.0, 0.0)
+
+                        let dmPlusIndicator = dmPlus / trueRange
+                        let dmMinusIndicator = dmMinus / trueRange
+                        if dmMinusIndicator > dmPlusIndicator then
+                            directionalMovementChange2 (rangeStart + 1) rangeEnd
+                        else
+                            rangeStart
+
+                let movementChangePoint = directionalMovementChange2 rangeStartIndex minBetweenMaxes.Index
+                if movementChangePoint < rangeEndIndex then
+                    let maxInBetween = 
+                        quotes
+                        |> Seq.skip movementChangePoint
+                        |> Seq.take (minBetweenMaxes.Index - movementChangePoint + 1)
+                        |> Seq.maxBy (fun q -> q.High)
+                    findMaxInbetween (maxInBetween.Index, movementChangePoint) (maxInBetween::results)
+                //todo: is this ever called?
+                else
+                    results
+
     let rec findMaxInRange range (results : list<Quotation>) =
         let rangeStartIndex, rangeEndIndex = range
         let isExhausted = (rangeEndIndex - rangeStartIndex) < 1
@@ -18,7 +76,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
             let maxInRange =
                 quotes 
                 |> Seq.skip rangeStartIndex
-                |> Seq.take (rangeEndIndex - rangeStartIndex)
+                |> Seq.take (rangeEndIndex - rangeStartIndex + 1)
                 |> Seq.maxBy (fun q -> q.High)
 
             if isRangeExhausted rangeStartIndex maxInRange.Index then
@@ -45,10 +103,10 @@ let private findMaxesImpl (quotes : Quotation[]) =
                                 if element > 0.0 then
                                     (plus + element, minus)
                                 else
-                                    (plus, minus + element)) (0.0, 0.0)
+                                    (plus, minus + element * -1.0)) (0.0, 0.0)
 
                         let dmPlusIndicator = dmPlus / trueRange
-                        let dmMinusIndicator = (dmMinus * -1.0) / trueRange
+                        let dmMinusIndicator = dmMinus / trueRange
                         if dmPlusIndicator > dmMinusIndicator then
                             directionalMovementChange rangeStart (rangeEnd - 1)
                         else
@@ -61,38 +119,18 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 else
                     maxInRange::results
 
-    let initialMaxes = findMaxInRange (0, (quotes.Length - 1)) []
-    
-    // possible qualifiers/scoring
-    // 1) distance between subsequent maxes
-    // 2) change between subsequent maxes
-    // 3) change max1 - min vs min - max 2
-    // needs more work
-    let nextRangesToSearch nieghbourhoodSize = 
-        let rec x items foundRanges =
-            match items with
-            | [] -> 
-                foundRanges
-            | head::next::tail ->
-                let minDistance = pown (nieghbourhoodSize / 2) 2
-                let isSufficientlyLarge = head.Index + minDistance < next.Index
-                if isSufficientlyLarge then
-                    x (next::tail) ((head, next)::foundRanges)
-                else
-                    x (next::tail) foundRanges
-            | _ -> 
-                foundRanges
-            
-        x initialMaxes []
-    
-    let ranges = nextRangesToSearch 20
-    let secondaryMaxes = 
-        ranges
-        |> Seq.map (fun (start, finish) -> 
-            let maxes = findMaxInRange (start.Index + 20, finish.Index) []
-            (start, finish, maxes))
+    let maxes = findMaxInRange (0, (quotes.Length - 1)) []
+    let maxesInBetween =
+        maxes
+        |> Seq.map (fun m -> m.Index)
+        |> Seq.pairwise
+        |> Seq.map (fun range -> findMaxInbetween range [])
+        |> Seq.collect id
+        |> Seq.toList
 
-    initialMaxes
+    List.concat [maxes;maxesInBetween]
+    |> Seq.sortBy (fun q -> q.Date)
+    |> Seq.toList
 
 let findMaxes (fetchContentLines : unit -> string[]) =
     fetchContentLines()
