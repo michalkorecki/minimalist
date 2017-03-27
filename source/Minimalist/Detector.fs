@@ -26,7 +26,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
             else
                 let rec directionalMovementChange2 rangeStart rangeEnd =
                     if rangeStart + 5 > rangeEnd then
-                        rangeStart
+                        None
                     else
                         let pairs =
                             quotes 
@@ -51,19 +51,18 @@ let private findMaxesImpl (quotes : Quotation[]) =
                         if dmMinusIndicator > dmPlusIndicator then
                             directionalMovementChange2 (rangeStart + 1) rangeEnd
                         else
-                            rangeStart
+                            Some rangeStart
 
                 let movementChangePoint = directionalMovementChange2 rangeStartIndex minBetweenMaxes.Index
-                if movementChangePoint < rangeEndIndex then
-                    let maxInBetween = 
-                        quotes
-                        |> Seq.skip movementChangePoint
-                        |> Seq.take (minBetweenMaxes.Index - movementChangePoint + 1)
-                        |> Seq.maxBy (fun q -> q.High)
-                    findMaxInbetween (maxInBetween.Index, movementChangePoint) (maxInBetween::results)
-                //todo: is this ever called?
-                else
-                    results
+                match movementChangePoint with
+                    | Some idx when idx < rangeEndIndex ->
+                        let maxInBetween = 
+                            quotes
+                            |> Seq.skip idx
+                            |> Seq.take (minBetweenMaxes.Index - idx + 1)
+                            |> Seq.maxBy (fun q -> q.High)
+                        findMaxInbetween (maxInBetween.Index, idx) (maxInBetween::results)
+                    | _ -> results
 
     let rec findMaxInRange range (results : list<Quotation>) =
         let rangeStartIndex, rangeEndIndex = range
@@ -130,6 +129,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
 
     List.concat [maxes;maxesInBetween]
     |> Seq.sortBy (fun q -> q.Date)
+    |> Seq.distinct
     |> Seq.toList
 
 let findMaxes (fetchContentLines : unit -> string[]) =
