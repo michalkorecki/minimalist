@@ -15,13 +15,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
         else
             let isRangeExhausted currentStart currentEnd =
                 currentStart + 5 > currentEnd
-            let minBetweenMaxes =
-                quotes
-                |> Seq.skip rangeStartIndex
-                |> Seq.take (rangeEndIndex - rangeStartIndex + 1)
-                |> Seq.minBy (fun q -> q.Low)
-            
-            if isRangeExhausted rangeStartIndex minBetweenMaxes.Index then
+            if isRangeExhausted rangeStartIndex rangeEndIndex then
                 results
             else
                 let rec directionalMovementChange2 rangeStart rangeEnd =
@@ -53,18 +47,18 @@ let private findMaxesImpl (quotes : Quotation[]) =
                         else
                             Some rangeStart
 
-                let movementChangePoint = directionalMovementChange2 rangeStartIndex minBetweenMaxes.Index
+                let movementChangePoint = directionalMovementChange2 rangeStartIndex rangeEndIndex
                 match movementChangePoint with
                 | Some idx when idx < rangeEndIndex ->
                     let maxInBetween = 
                         quotes
                         |> Seq.skip idx
-                        |> Seq.take (minBetweenMaxes.Index - idx + 1)
+                        |> Seq.take (rangeEndIndex - idx + 1)
                         |> Seq.maxBy (fun q -> q.High)
                     findMaxInbetween (maxInBetween.Index, idx) (maxInBetween::results)
                 | _ -> results
 
-    let rec findMaxInRange range (results : list<Quotation>) =
+    let rec findMaxInRange range (results : list<Quotation * int>) =
         let rangeStartIndex, rangeEndIndex = range
         let isExhausted = (rangeEndIndex - rangeStartIndex) < 1
         if isExhausted then
@@ -79,7 +73,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 |> Seq.maxBy (fun q -> q.High)
 
             if isRangeExhausted rangeStartIndex maxInRange.Index then
-                maxInRange::results
+                (maxInRange, maxInRange.Index)::results
             else
                 let rec directionalMovementChange rangeStart rangeEnd =
                     //todo: fix recursion
@@ -114,22 +108,26 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 let movementChangePoint = directionalMovementChange rangeStartIndex maxInRange.Index
                 match movementChangePoint with
                 | Some idx when idx > rangeStartIndex ->
-                    findMaxInRange (rangeStartIndex, idx) (maxInRange::results)
-                | _ -> maxInRange::results
+                    findMaxInRange (rangeStartIndex, idx) ((maxInRange, idx)::results)
+                | _ -> (maxInRange, maxInRange.Index)::results
 
     let maxes = findMaxInRange (0, (quotes.Length - 1)) []
     let maxesInBetween =
         maxes
-        |> Seq.map (fun m -> m.Index)
         |> Seq.pairwise
-        |> Seq.map (fun range -> findMaxInbetween range [])
+        |> Seq.map (fun ((rangeStart, _), (rangeEnd, directionChangeIndex)) -> findMaxInbetween (rangeStart.Index, directionChangeIndex) [])
         |> Seq.collect id
         |> Seq.toList
 
-    List.concat [maxes;maxesInBetween]
-    |> Seq.sortBy (fun q -> q.Date)
-    |> Seq.distinct
-    |> Seq.toList
+    let initialMaxes =
+        maxes
+        |> Seq.map (fun (q, _) -> q)
+        |> Seq.toList
+
+    List.concat [initialMaxes;maxesInBetween]
+        |> Seq.sortBy (fun q -> q.Date)
+        |> Seq.distinct
+        |> Seq.toList
 
 let findMaxes (fetchContentLines : unit -> string[]) =
     fetchContentLines()
