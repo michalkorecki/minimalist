@@ -55,14 +55,14 @@ let private findMaxesImpl (quotes : Quotation[]) =
 
                 let movementChangePoint = directionalMovementChange2 rangeStartIndex minBetweenMaxes.Index
                 match movementChangePoint with
-                    | Some idx when idx < rangeEndIndex ->
-                        let maxInBetween = 
-                            quotes
-                            |> Seq.skip idx
-                            |> Seq.take (minBetweenMaxes.Index - idx + 1)
-                            |> Seq.maxBy (fun q -> q.High)
-                        findMaxInbetween (maxInBetween.Index, idx) (maxInBetween::results)
-                    | _ -> results
+                | Some idx when idx < rangeEndIndex ->
+                    let maxInBetween = 
+                        quotes
+                        |> Seq.skip idx
+                        |> Seq.take (minBetweenMaxes.Index - idx + 1)
+                        |> Seq.maxBy (fun q -> q.High)
+                    findMaxInbetween (maxInBetween.Index, idx) (maxInBetween::results)
+                | _ -> results
 
     let rec findMaxInRange range (results : list<Quotation>) =
         let rangeStartIndex, rangeEndIndex = range
@@ -84,7 +84,7 @@ let private findMaxesImpl (quotes : Quotation[]) =
                 let rec directionalMovementChange rangeStart rangeEnd =
                     //todo: fix recursion
                     if isRangeExhausted rangeStart rangeEnd then
-                        rangeEnd
+                        None
                     else
                         let pairs =
                             quotes 
@@ -109,14 +109,13 @@ let private findMaxesImpl (quotes : Quotation[]) =
                         if dmPlusIndicator > dmMinusIndicator then
                             directionalMovementChange rangeStart (rangeEnd - 1)
                         else
-                            rangeEnd
+                            Some rangeEnd
                             
                 let movementChangePoint = directionalMovementChange rangeStartIndex maxInRange.Index
-                if movementChangePoint > rangeStartIndex then
-                    findMaxInRange (rangeStartIndex, movementChangePoint) (maxInRange::results)
-                //todo: is this ever called?
-                else
-                    maxInRange::results
+                match movementChangePoint with
+                | Some idx when idx > rangeStartIndex ->
+                    findMaxInRange (rangeStartIndex, idx) (maxInRange::results)
+                | _ -> maxInRange::results
 
     let maxes = findMaxInRange (0, (quotes.Length - 1)) []
     let maxesInBetween =
