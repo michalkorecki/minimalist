@@ -4,6 +4,7 @@ open Minimalist.Data
 open Minimalist.Indicators
 open System
 open System.IO
+open System.Diagnostics
 
 
 let private dmSeekSize = 5
@@ -35,7 +36,7 @@ let rec private findBullDirectionalMove rangeStart rangeEnd quotes =
         if dmPlusIndicator > dmMinusIndicator then
             findBullDirectionalMove rangeStart (rangeEnd - 1) quotes
         else
-            Some rangeEnd
+            Some (rangeEnd - 2)
 
 let rec private findBearDirectionalMove rangeStart rangeEnd quotes =
     if rangeStart + dmSeekSize > rangeEnd then
@@ -64,7 +65,7 @@ let rec private findBearDirectionalMove rangeStart rangeEnd quotes =
         if dmMinusIndicator > dmPlusIndicator then
             findBearDirectionalMove (rangeStart + 1) rangeEnd quotes
         else
-            Some rangeStart
+            Some (rangeStart + 2)
 
 let private findMaxesBinary (quotes : Quotation[]) =
     let rec findMaxesBinaryImpl range (results : list<Quotation>)=
@@ -77,23 +78,28 @@ let private findMaxesBinary (quotes : Quotation[]) =
                 |> Seq.skip rangeStart
                 |> Seq.take (rangeEnd - rangeStart + 1)
                 |> Seq.maxBy (fun q -> q.High)
+            Debug.WriteLine( (sprintf "%O MAX (%O - %O)" max.Date quotes.[rangeStart].Date quotes.[rangeEnd].Date))
+            Debug.WriteLine( (sprintf "%O Calling pivot BEAR" max.Date))
             let dmPivotBear = findBearDirectionalMove max.Index rangeEnd quotes
             let bear = 
                 match dmPivotBear with
                 | Some index when index < rangeEnd && index > rangeStart ->
+                    Debug.WriteLine( (sprintf "%O Got pivot BEAR: %O" max.Date quotes.[index].Date))
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
+            Debug.WriteLine( (sprintf "%O Calling pivot BULL" max.Date))
             let dmPivotBull = findBullDirectionalMove rangeStart max.Index quotes
             let bull =
                 match dmPivotBull with
                 | Some index when index < rangeEnd && index > rangeStart ->
+                    Debug.WriteLine( (sprintf "%O Got pivot BULL: %O" max.Date quotes.[index].Date))
                     findMaxesBinaryImpl (rangeStart, index) results
                 | _ ->
                     []
 
             List.concat [max::bull;bear]
-            
+
     findMaxesBinaryImpl (0, quotes.Length - 1) []
     |> Seq.distinct
     |> Seq.sortBy (fun q -> q.Date)
