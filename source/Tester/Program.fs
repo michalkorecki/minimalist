@@ -3,7 +3,7 @@ open System
 open System.IO
 open System.Reflection
 
-let loadYear year = fun () ->
+let loadYear year =
     let assembly = Assembly.GetExecutingAssembly()
     use resourceStream = assembly.GetManifestResourceStream("11b.dat")
     use reader = new StreamReader(resourceStream)

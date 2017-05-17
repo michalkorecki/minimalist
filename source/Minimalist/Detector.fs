@@ -106,8 +106,8 @@ let private findMaxesBinary (quotes : Quotation[]) =
     |> Seq.toList
 
 
-let findMaxes (fetchContentLines : unit -> string[]) =
-    fetchContentLines()
+let findMaxes contentLines =
+    contentLines
     |> Seq.mapi parse
     |> Seq.toArray
     |> findMaxesBinary

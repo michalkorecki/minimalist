@@ -8,7 +8,7 @@ open System.Reflection
 open Minimalist.Data
 open Minimalist.Detector
 
-let loadTestData ticker = fun () ->
+let loadTestData ticker =
     let file = sprintf "%s.2016.txt" ticker
     let assembly = Assembly.GetExecutingAssembly()
     use resourceStream = assembly.GetManifestResourceStream(file)
@@ -26,7 +26,7 @@ let shouldContainMaxAt year month day quotations =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (core detection)`` () =
-    let maxes = findMaxes (loadTestData "11b")
+    let maxes = "11b" |> loadTestData |> findMaxes
 
     maxes |> shouldContainMaxAt 2016 01 13
     maxes |> shouldContainMaxAt 2016 01 29
@@ -39,7 +39,7 @@ let ``Maxes are found for 11B quotations (core detection)`` () =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (precise detection)`` () =
-    let maxes = findMaxes (loadTestData "11b")
+    let maxes = "11b" |> loadTestData |> findMaxes
 
     maxes |> should haveLength 8
     maxes.[0] |> shouldOccurAt 2016 01 13
@@ -53,7 +53,7 @@ let ``Maxes are found for 11B quotations (precise detection)`` () =
 
 [<Test>]
 let ``Maxes are found for PGN quotations (precise detection)`` () =
-    let maxes = findMaxes (loadTestData "pgn")
+    let maxes = "pgn" |> loadTestData |> findMaxes
 
     maxes |> should haveLength 6
     maxes.[0] |> shouldOccurAt 2016 01 04
@@ -65,7 +65,7 @@ let ``Maxes are found for PGN quotations (precise detection)`` () =
 
 [<Test>]
 let ``Maxes are found for WWL quotations (precise detection)`` () =
-    let maxes = findMaxes (loadTestData "wwl")
+    let maxes = "wwl" |> loadTestData |> findMaxes
 
     maxes |> should haveLength 5
     maxes.[0] |> shouldOccurAt 2016 01 04
