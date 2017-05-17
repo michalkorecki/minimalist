@@ -23,6 +23,9 @@ let shouldOccurAt year month day quotation =
 let shouldContainMaxAt year month day quotations =
     quotations |> Seq.map (fun q -> q.Date) |> should contain (new DateTime(year, month, day))
 
+let shouldNotContainMaxAt year month day quotations =
+    quotations |> Seq.map (fun q -> q.Date) |> should not' (contain (new DateTime(year, month, day)))
+
 
 [<Test>]
 let ``Maxes are found for 11B quotations (core detection)`` () =
@@ -36,6 +39,20 @@ let ``Maxes are found for 11B quotations (core detection)`` () =
     maxes |> shouldContainMaxAt 2016 08 23
     maxes |> shouldContainMaxAt 2016 09 15
     maxes |> shouldContainMaxAt 2016 12 14
+
+[<Test>]
+let ``11B maxes detection does not return definitely wrong maxes`` () =
+    let maxes = "11b" |> loadTestData |> findMaxes
+
+    maxes |> shouldNotContainMaxAt 2016 02 26
+    maxes |> shouldNotContainMaxAt 2016 03 31
+    maxes |> shouldNotContainMaxAt 2016 04 08
+    maxes |> shouldNotContainMaxAt 2016 04 29
+    maxes |> shouldNotContainMaxAt 2016 06 03
+    maxes |> shouldNotContainMaxAt 2016 07 26
+    maxes |> shouldNotContainMaxAt 2016 10 13
+    maxes |> shouldNotContainMaxAt 2016 10 31
+    maxes |> shouldNotContainMaxAt 2016 11 10
 
 [<Test>]
 let ``Maxes are found for 11B quotations (precise detection)`` () =
