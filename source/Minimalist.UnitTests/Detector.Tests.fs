@@ -20,10 +20,10 @@ let loadTestData ticker =
 let shouldOccurAt year month day quotation =
     quotation.Date |> should equal (new DateTime(year, month, day))
 
-let shouldContainMaxAt year month day quotations =
+let shouldContain year month day quotations =
     quotations |> Seq.map (fun q -> q.Date) |> should contain (new DateTime(year, month, day))
 
-let shouldNotContainMaxAt year month day quotations =
+let shouldNotContain year month day quotations =
     quotations |> Seq.map (fun q -> q.Date) |> should not' (contain (new DateTime(year, month, day)))
 
 
@@ -31,28 +31,42 @@ let shouldNotContainMaxAt year month day quotations =
 let ``Maxes are found for 11B quotations (core detection)`` () =
     let maxes = "11b" |> loadTestData |> findMaxes
 
-    maxes |> shouldContainMaxAt 2016 01 13
-    maxes |> shouldContainMaxAt 2016 01 29
-    maxes |> shouldContainMaxAt 2016 03 21
-    maxes |> shouldContainMaxAt 2016 05 25
-    maxes |> shouldContainMaxAt 2016 07 26
-    maxes |> shouldContainMaxAt 2016 08 23
-    maxes |> shouldContainMaxAt 2016 09 15
-    maxes |> shouldContainMaxAt 2016 12 14
+    maxes |> shouldContain 2016 01 13
+    maxes |> shouldContain 2016 01 29
+    maxes |> shouldContain 2016 03 21
+    maxes |> shouldContain 2016 05 25
+    maxes |> shouldContain 2016 07 26
+    maxes |> shouldContain 2016 08 23
+    maxes |> shouldContain 2016 09 15
+    maxes |> shouldContain 2016 12 14
+
+[<Test>]
+let ``Mins are found for 11B quotations (core detection)`` () =
+    let mins = "11b" |> loadTestData |> findMins
+
+    mins |> shouldContain 2016 01 04
+    mins |> shouldContain 2016 02 17
+    mins |> shouldContain 2016 05 13
+    mins |> shouldContain 2016 06 24
+    mins |> shouldContain 2016 08 04
+    mins |> shouldContain 2016 08 30
+    mins |> shouldContain 2016 09 27
+    mins |> shouldContain 2016 11 09
+    mins |> shouldContain 2016 12 20
 
 [<Test>]
 let ``11B maxes detection does not return definitely wrong maxes`` () =
     let maxes = "11b" |> loadTestData |> findMaxes
 
-    maxes |> shouldNotContainMaxAt 2016 02 26
-    maxes |> shouldNotContainMaxAt 2016 03 31
-    maxes |> shouldNotContainMaxAt 2016 04 08
-    maxes |> shouldNotContainMaxAt 2016 04 29
-    maxes |> shouldNotContainMaxAt 2016 06 03
-    maxes |> shouldNotContainMaxAt 2016 07 26
-    maxes |> shouldNotContainMaxAt 2016 10 13
-    maxes |> shouldNotContainMaxAt 2016 10 31
-    maxes |> shouldNotContainMaxAt 2016 11 10
+    maxes |> shouldNotContain 2016 02 26
+    maxes |> shouldNotContain 2016 03 31
+    maxes |> shouldNotContain 2016 04 08
+    maxes |> shouldNotContain 2016 04 29
+    maxes |> shouldNotContain 2016 06 03
+    maxes |> shouldNotContain 2016 07 26
+    maxes |> shouldNotContain 2016 10 13
+    maxes |> shouldNotContain 2016 10 31
+    maxes |> shouldNotContain 2016 11 10
 
 [<Test>]
 let ``Maxes are found for 11B quotations (precise detection)`` () =

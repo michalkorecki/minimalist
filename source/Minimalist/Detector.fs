@@ -68,6 +68,7 @@ let rec private findBearDirectionalMove rangeStart rangeEnd quotes =
             Some (rangeStart + 2)
 
 let private findMaxesBinary (quotes : Quotation[]) =
+    //todo: make this tail recursive
     let rec findMaxesBinaryImpl range (results : list<Quotation>)=
         let rangeStart, rangeEnd = range
         if rangeStart >= rangeEnd then
@@ -105,9 +106,14 @@ let private findMaxesBinary (quotes : Quotation[]) =
     |> Seq.sortBy (fun q -> q.Date)
     |> Seq.toList
 
-
+//todo: why not take even more direct dependency, seq<Quotation> ?
 let findMaxes contentLines =
     contentLines
     |> Seq.mapi parse
     |> Seq.toArray
     |> findMaxesBinary
+
+let findMins contentLines =
+    contentLines
+    |> Seq.mapi parse
+    |> Seq.toList
