@@ -9,61 +9,49 @@ open System.Diagnostics
 
 let private dmSeekSize = 5
 
-let rec private findBullDirectionalMove rangeStart rangeEnd quotes =
-    if rangeStart + dmSeekSize > rangeEnd then
+let isExhausted (rangeStart, rangeEnd) =
+    rangeStart + dmSeekSize > rangeEnd
+
+let private directionalMovementIndicator skippedCount quotes =
+    let pairs =
+        quotes
+        |> Seq.skip skippedCount
+        |> Seq.take (dmSeekSize + 1)
+        |> Seq.pairwise
+    let trueRange =
+        pairs
+        |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
+        |> Seq.sum
+    let dmPlus, dmMinus =
+        pairs
+        |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
+        |> Seq.fold (fun (plus, minus) element ->
+            if element > 0.0 then
+                (plus + element, minus)
+            else
+                (plus, minus + element * -1.0)) (0.0, 0.0)
+
+    (dmPlus / trueRange, dmMinus / trueRange)
+
+let rec private findBullTrendEnd range quotes =
+    if isExhausted range then
         None
     else
-        let pairs =
-            quotes 
-            |> Seq.skip (rangeEnd - dmSeekSize)
-            |> Seq.take (dmSeekSize + 1)
-            |> Seq.pairwise
-        let trueRange =
-            pairs
-            |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
-            |> Seq.sum
-        let dmPlus, dmMinus =
-            pairs
-            |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
-            |> Seq.fold (fun (plus, minus) element ->
-                if element > 0.0 then
-                    (plus + element, minus)
-                else
-                    (plus, minus + element * -1.0)) (0.0, 0.0)
-
-        let dmPlusIndicator = dmPlus / trueRange
-        let dmMinusIndicator = dmMinus / trueRange
+        let rangeStart, rangeEnd = range
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - dmSeekSize) quotes
         if dmPlusIndicator > dmMinusIndicator then
-            findBullDirectionalMove rangeStart (rangeEnd - 1) quotes
+            findBullTrendEnd (rangeStart, rangeEnd - 1) quotes
         else
             Some (rangeEnd - 2)
 
-let rec private findBearDirectionalMove rangeStart rangeEnd quotes =
-    if rangeStart + dmSeekSize > rangeEnd then
+let rec private findBearTrendEnd range quotes =
+    if isExhausted range then
         None
     else
-        let pairs =
-            quotes 
-            |> Seq.skip rangeStart
-            |> Seq.take (dmSeekSize + 1)
-            |> Seq.pairwise
-        let trueRange =
-            pairs
-            |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
-            |> Seq.sum
-        let dmPlus, dmMinus =
-            pairs
-            |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
-            |> Seq.fold (fun (plus, minus) element ->
-                if element > 0.0 then
-                    (plus + element, minus)
-                else
-                    (plus, minus + element * -1.0)) (0.0, 0.0)
-
-        let dmPlusIndicator = dmPlus / trueRange
-        let dmMinusIndicator = dmMinus / trueRange
+        let rangeStart, rangeEnd = range
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmMinusIndicator > dmPlusIndicator then
-            findBearDirectionalMove (rangeStart + 1) rangeEnd quotes
+            findBearTrendEnd (rangeStart + 1, rangeEnd) quotes
         else
             Some (rangeStart + 2)
 
@@ -79,22 +67,17 @@ let private findMaxesBinary (quotes : Quotation[]) =
                 |> Seq.skip rangeStart
                 |> Seq.take (rangeEnd - rangeStart + 1)
                 |> Seq.maxBy (fun q -> q.High)
-            Debug.WriteLine( (sprintf "%O MAX (%O - %O)" max.Date quotes.[rangeStart].Date quotes.[rangeEnd].Date))
-            Debug.WriteLine( (sprintf "%O Calling pivot BEAR" max.Date))
-            let dmPivotBear = findBearDirectionalMove max.Index rangeEnd quotes
+            let bearTrendEnd = findBearTrendEnd (max.Index, rangeEnd) quotes
             let bear = 
-                match dmPivotBear with
+                match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    Debug.WriteLine( (sprintf "%O Got pivot BEAR: %O" max.Date quotes.[index].Date))
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            Debug.WriteLine( (sprintf "%O Calling pivot BULL" max.Date))
-            let dmPivotBull = findBullDirectionalMove rangeStart max.Index quotes
+            let bullTrendEnd = findBullTrendEnd (rangeStart, max.Index) quotes
             let bull =
-                match dmPivotBull with
+                match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    Debug.WriteLine( (sprintf "%O Got pivot BULL: %O" max.Date quotes.[index].Date))
                     findMaxesBinaryImpl (rangeStart, index) results
                 | _ ->
                     []
