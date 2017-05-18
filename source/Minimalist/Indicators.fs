@@ -13,7 +13,7 @@ let trueRange yesterday today =
 let directionalMovement yesterday today =
     let highsDistance = today.High - yesterday.High
     let lowsDistance = today.Low - yesterday.Low
-    let isInsideDay = highsDistance < 0.0 && lowsDistance > 0.0
+    let isInsideDay = today.High < yesterday.High && today.Low > yesterday.Low
     if isInsideDay then
         0.0
     else
