@@ -40,7 +40,7 @@ let ``Maxes are found for 11B quotations (core detection)`` () =
     maxes |> shouldContain 2016 09 15
     maxes |> shouldContain 2016 12 14
 
-//[<Test>]
+[<Test>]
 let ``Mins are found for 11B quotations (core detection)`` () =
     let mins = "11b" |> loadTestData |> findMins
 

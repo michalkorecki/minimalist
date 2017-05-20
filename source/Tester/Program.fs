@@ -21,6 +21,6 @@ let loadQuotes rangeStart rangeEnd =
 let main argv =
     loadQuotes 20160104 20161231
     //loadQuotes 20160301 20160322
-    |> findMaxes
+    |> findMins
     |> Seq.iteri (fun i q -> printfn "%i %A %.2f" i q.Date q.High)
     0

@@ -3,8 +3,6 @@
 open Minimalist.Data
 open Minimalist.Indicators
 open System
-open System.IO
-open System.Diagnostics
 
 
 let private dmSeekSize = 5
@@ -12,7 +10,13 @@ let private dmSeekSize = 5
 let isExhausted (rangeStart, rangeEnd) =
     rangeStart + dmSeekSize > rangeEnd
 
+let private narrowTo (rangeStart, rangeEnd) quotes =
+    quotes
+    |> Seq.skip rangeStart
+    |> Seq.take (rangeEnd - rangeStart + 1)
+
 let private directionalMovementIndicator skippedCount quotes =
+    //todo: pairs as dependency?
     let pairs =
         quotes
         |> Seq.skip skippedCount
@@ -33,28 +37,29 @@ let private directionalMovementIndicator skippedCount quotes =
 
     (dmPlus / trueRange, dmMinus / trueRange)
 
-let rec private findBullTrendEnd range quotes =
+
+let rec private findBullTrendEndBefore range quotes =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - dmSeekSize) quotes
         if dmPlusIndicator > dmMinusIndicator then
-            findBullTrendEnd (rangeStart, rangeEnd - 1) quotes
+            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes
         else
             Some (rangeEnd - 2)
 
-let rec private findBearTrendEnd range quotes =
+let rec private findBearTrendEndAfter range quotes =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmMinusIndicator > dmPlusIndicator then
-            findBearTrendEnd (rangeStart + 1, rangeEnd) quotes
+            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes
         else
             Some (rangeStart + 2)
-
+   
 let private findMaxesBinary (quotes : Quotation[]) =
     //todo: make this tail recursive
     let rec findMaxesBinaryImpl range (results : list<Quotation>)=
@@ -64,17 +69,16 @@ let private findMaxesBinary (quotes : Quotation[]) =
         else
             let max =
                 quotes
-                |> Seq.skip rangeStart
-                |> Seq.take (rangeEnd - rangeStart + 1)
+                |> narrowTo range
                 |> Seq.maxBy (fun q -> q.High)
-            let bearTrendEnd = findBearTrendEnd (max.Index, rangeEnd) quotes
+            let bearTrendEnd = findBearTrendEndAfter (max.Index, rangeEnd) quotes
             let bear = 
                 match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bullTrendEnd = findBullTrendEnd (rangeStart, max.Index) quotes
+            let bullTrendEnd = findBullTrendEndBefore (rangeStart, max.Index) quotes
             let bull =
                 match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
@@ -89,6 +93,61 @@ let private findMaxesBinary (quotes : Quotation[]) =
     |> Seq.sortBy (fun q -> q.Date)
     |> Seq.toList
 
+let rec private findBullTrendEndAfter range quotes =
+    if isExhausted range then
+        None
+    else
+        let rangeStart, rangeEnd = range
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
+        if dmPlusIndicator > dmMinusIndicator then
+            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes
+        else
+            Some (rangeStart + 2)
+
+let rec private findBearTrendEndBefore range quotes =
+    if isExhausted range then
+        None
+    else
+        let rangeStart, rangeEnd = range
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
+        if dmMinusIndicator > dmPlusIndicator then
+            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes
+        else
+            Some (rangeEnd - 2)
+
+let private findMinsBinary (quotes : Quotation[]) =
+    let rec findMinsBinaryImpl range (results : list<Quotation>) =
+        let rangeStart, rangeEnd = range
+        if rangeStart >= rangeEnd then
+            results
+        else
+            let min =
+                quotes
+                |> narrowTo range
+                |> Seq.minBy (fun q -> q.Low)
+            let bullTrendEnd = findBullTrendEndAfter (min.Index, rangeEnd) quotes
+            let bull = 
+                match bullTrendEnd with
+                | Some index when index < rangeEnd && index > rangeStart ->
+                    findMinsBinaryImpl (index, rangeEnd) results
+                | _ ->
+                    []
+            let bearTrendEnd = findBearTrendEndBefore (rangeStart, min.Index) quotes
+            let bear =
+                match bearTrendEnd with
+                | Some index when index < rangeEnd && index > rangeStart ->
+                    findMinsBinaryImpl (rangeStart, index) results
+                | _ ->
+                    []
+            
+            List.concat [min::bull;bear]
+    
+    findMinsBinaryImpl (0, quotes.Length - 1) []
+    |> Seq.distinct
+    |> Seq.sortBy (fun q -> q.Date)
+    |> Seq.toList
+
+
 //todo: why not take even more direct dependency, seq<Quotation> ?
 let findMaxes contentLines =
     contentLines
@@ -99,4 +158,5 @@ let findMaxes contentLines =
 let findMins contentLines =
     contentLines
     |> Seq.mapi parse
-    |> Seq.toList
+    |> Seq.toArray
+    |> findMinsBinary
