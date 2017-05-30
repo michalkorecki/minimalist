@@ -1,4 +1,5 @@
-﻿open Minimalist.Detector
+﻿open Minimalist.Data
+open Minimalist.Detector
 open System
 open System.IO
 open System.Reflection
@@ -19,35 +20,18 @@ let loadQuotes rangeStart rangeEnd =
 
 [<EntryPoint>]
 let main argv =
-    let quotes = loadQuotes 20160104 20161231
-    let mins = 
+    let quotes = loadQuotes 20160104 20161231 
+    let extrema =
         quotes
-        |> findMins
-        |> Seq.map (fun m -> ("min", m))
-    let maxs = 
-        quotes
-        |> findMaxes
-        |> Seq.map (fun m -> ("max", m))
-    
-    let all =
-        Seq.concat [mins;maxs]
-        |> Seq.sortBy (fun (_, q) -> q.Date)
-        |> Seq.fold (fun acc (key, current) ->
-            match acc, key with 
-            | [], _ ->
-                [(key, current)]
-            | ("min", value)::tail, "min" ->
-                if value.Low < current.Low then
-                    acc
-                else
-                    ("min", current)::tail
-            | ("max", value)::tail, "max" ->
-                if value.High > current.High then
-                    acc
-                else
-                    ("max", current)::tail
-            | _, _ ->
-                (key, current)::acc) []
-        |> Seq.rev
-        |> Seq.iter (fun (kind, q) -> printfn "%s %A" kind q.Date)
+        |> Seq.mapi parse
+        |> Seq.toArray
+        |> findExtrema
+
+    extrema
+        |> Seq.iter (fun e -> 
+            match e with 
+            | Max q ->
+                printfn "max %A" q.Date
+            | Min q -> 
+                printfn "min %A" q.Date)
     0

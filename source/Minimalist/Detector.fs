@@ -4,6 +4,9 @@ open Minimalist.Data
 open Minimalist.Indicators
 open System
 
+type Extremum = 
+    | Min of Quotation
+    | Max of Quotation
 
 let private dmSeekSize = 5
 
@@ -90,8 +93,7 @@ let private findMaxesBinary (quotes : Quotation[]) =
 
     findMaxesBinaryImpl (0, quotes.Length - 1) []
     |> Seq.distinct
-    |> Seq.sortBy (fun q -> q.Date)
-    |> Seq.toList
+    |> Seq.map (fun q -> Max q)
 
 let rec private findBullTrendEndAfter range quotes =
     if isExhausted range then
@@ -144,8 +146,7 @@ let private findMinsBinary (quotes : Quotation[]) =
     
     findMinsBinaryImpl (0, quotes.Length - 1) []
     |> Seq.distinct
-    |> Seq.sortBy (fun q -> q.Date)
-    |> Seq.toList
+    |> Seq.map (fun q -> Min q)
 
 
 //todo: why not take even more direct dependency, seq<Quotation> ?
@@ -160,3 +161,32 @@ let findMins contentLines =
     |> Seq.mapi parse
     |> Seq.toArray
     |> findMinsBinary
+
+let findExtrema quotations =
+    let mins = findMinsBinary quotations
+    let maxes = findMaxesBinary quotations
+    [mins;maxes]
+    |> Seq.concat
+    |> Seq.sortBy (fun e ->
+        match e with 
+        | Max q 
+        | Min q -> q.Date)
+    |> Seq.fold (fun acc extremum ->
+            match acc, extremum with 
+            | [], _ ->
+                [extremum]
+            | (Min head)::tail, Min current ->
+                if head.Low < current.Low then
+                    acc
+                else
+                    (Min current)::tail
+            | (Max head)::tail, Max current ->
+                if head.High > current.High then
+                    acc
+                else
+                    (Max current)::tail
+            | _, _ ->
+                extremum::acc) []
+    |> Seq.rev
+
+    
