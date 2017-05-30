@@ -93,7 +93,7 @@ let private findMaxesBinary (quotes : Quotation[]) =
 
     findMaxesBinaryImpl (0, quotes.Length - 1) []
     |> Seq.distinct
-    |> Seq.map (fun q -> Max q)
+    |> Seq.toList
 
 let rec private findBullTrendEndAfter range quotes =
     if isExhausted range then
@@ -146,7 +146,7 @@ let private findMinsBinary (quotes : Quotation[]) =
     
     findMinsBinaryImpl (0, quotes.Length - 1) []
     |> Seq.distinct
-    |> Seq.map (fun q -> Min q)
+    |> Seq.toList
 
 
 //todo: why not take even more direct dependency, seq<Quotation> ?
@@ -163,8 +163,8 @@ let findMins contentLines =
     |> findMinsBinary
 
 let findExtrema quotations =
-    let mins = findMinsBinary quotations
-    let maxes = findMaxesBinary quotations
+    let mins = findMinsBinary quotations |> Seq.map (fun q -> Min q)
+    let maxes = findMaxesBinary quotations |> Seq.map (fun q -> Max q)
     [mins;maxes]
     |> Seq.concat
     |> Seq.sortBy (fun e ->
