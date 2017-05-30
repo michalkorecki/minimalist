@@ -19,8 +19,35 @@ let loadQuotes rangeStart rangeEnd =
 
 [<EntryPoint>]
 let main argv =
-    loadQuotes 20160104 20161231
-    //loadQuotes 20160301 20160322
-    |> findMins
-    |> Seq.iteri (fun i q -> printfn "%i %A %.2f" i q.Date q.High)
+    let quotes = loadQuotes 20160104 20161231
+    let mins = 
+        quotes
+        |> findMins
+        |> Seq.map (fun m -> ("min", m))
+    let maxs = 
+        quotes
+        |> findMaxes
+        |> Seq.map (fun m -> ("max", m))
+    
+    let all =
+        Seq.concat [mins;maxs]
+        |> Seq.sortBy (fun (_, q) -> q.Date)
+        |> Seq.fold (fun acc (key, current) ->
+            match acc, key with 
+            | [], _ ->
+                [(key, current)]
+            | ("min", value)::tail, "min" ->
+                if value.Low < current.Low then
+                    acc
+                else
+                    ("min", current)::tail
+            | ("max", value)::tail, "max" ->
+                if value.High > current.High then
+                    acc
+                else
+                    ("max", current)::tail
+            | _, _ ->
+                (key, current)::acc) []
+        |> Seq.rev
+        |> Seq.iter (fun (kind, q) -> printfn "%s %A" kind q.Date)
     0
