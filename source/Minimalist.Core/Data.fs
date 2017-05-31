@@ -1,4 +1,4 @@
-﻿module Minimalist.Data
+﻿module Minimalist.Core.Data
 
 open System
 

@@ -1,6 +1,6 @@
-﻿module Minimalist.Indicators
+﻿module Minimalist.Core.Indicators
 
-open Minimalist.Data
+open Minimalist.Core.Data
 
 let trueRange yesterday today =
     let guaranteedMin = 0.01

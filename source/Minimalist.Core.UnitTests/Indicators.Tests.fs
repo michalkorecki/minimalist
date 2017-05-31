@@ -1,8 +1,8 @@
-﻿module Minimalist.UnitTests.Indicators.Tests
+﻿module Minimalist.Core.UnitTests.Indicators.Tests
 
 open FsUnit
-open Minimalist.Data
-open Minimalist.Indicators
+open Minimalist.Core.Data
+open Minimalist.Core.Indicators
 open NUnit.Framework
 open System
 

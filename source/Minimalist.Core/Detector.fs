@@ -1,7 +1,7 @@
-﻿module Minimalist.Detector
+﻿module Minimalist.Core.Detector
 
-open Minimalist.Data
-open Minimalist.Indicators
+open Minimalist.Core.Data
+open Minimalist.Core.Indicators
 open System
 
 type Extremum = 

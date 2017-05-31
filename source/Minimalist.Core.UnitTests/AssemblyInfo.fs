@@ -1,4 +1,4 @@
-﻿namespace Tester.AssemblyInfo
+﻿namespace Minimalist.Core.UnitTests.AssemblyInfo
 
 open System.Reflection
 open System.Runtime.CompilerServices
@@ -7,11 +7,11 @@ open System.Runtime.InteropServices
 // General Information about an assembly is controlled through the following 
 // set of attributes. Change these attribute values to modify the information
 // associated with an assembly.
-[<assembly: AssemblyTitle("Tester")>]
+[<assembly: AssemblyTitle("Minimalist.Core.UnitTests")>]
 [<assembly: AssemblyDescription("")>]
 [<assembly: AssemblyConfiguration("")>]
 [<assembly: AssemblyCompany("")>]
-[<assembly: AssemblyProduct("Tester")>]
+[<assembly: AssemblyProduct("Minimalist.Core.UnitTests")>]
 [<assembly: AssemblyCopyright("Copyright ©  2017")>]
 [<assembly: AssemblyTrademark("")>]
 [<assembly: AssemblyCulture("")>]
@@ -22,7 +22,7 @@ open System.Runtime.InteropServices
 [<assembly: ComVisible(false)>]
 
 // The following GUID is for the ID of the typelib if this project is exposed to COM
-[<assembly: Guid("14198a17-b50c-47f7-87dd-19da6cfaff15")>]
+[<assembly: Guid("6cda1278-e3e3-46a9-af6a-8d87b4e84073")>]
 
 // Version information for an assembly consists of the following four values:
 // 

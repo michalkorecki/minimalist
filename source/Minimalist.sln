@@ -1,13 +1,13 @@
 ﻿
 Microsoft Visual Studio Solution File, Format Version 12.00
-# Visual Studio 14
-VisualStudioVersion = 14.0.25420.1
+# Visual Studio 15
+VisualStudioVersion = 15.0.26430.6
 MinimumVisualStudioVersion = 10.0.40219.1
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist", "Minimalist\Minimalist.fsproj", "{B6861077-74A5-4887-A94A-79AB8DA557D0}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.Core", "Minimalist.Core\Minimalist.Core.fsproj", "{B6861077-74A5-4887-A94A-79AB8DA557D0}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.UnitTests", "Minimalist.UnitTests\Minimalist.UnitTests.fsproj", "{6CDA1278-E3E3-46A9-AF6A-8D87B4E84073}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.Core.UnitTests", "Minimalist.Core.UnitTests\Minimalist.Core.UnitTests.fsproj", "{6CDA1278-E3E3-46A9-AF6A-8D87B4E84073}"
 EndProject
-Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Tester", "Tester\Tester.fsproj", "{14198A17-B50C-47F7-87DD-19DA6CFAFF15}"
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.App", "Minimalist.App\Minimalist.App.fsproj", "{14198A17-B50C-47F7-87DD-19DA6CFAFF15}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution

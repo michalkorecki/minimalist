@@ -1,12 +1,12 @@
-﻿module Minimalist.UnitTests.Detector.Tests
+﻿module Minimalist.Core.UnitTests.Detector.Tests
 
 open NUnit.Framework
 open FsUnit
 open System
 open System.IO
 open System.Reflection
-open Minimalist.Data
-open Minimalist.Detector
+open Minimalist.Core.Data
+open Minimalist.Core.Detector
 
 let loadQuotations ticker =
     let file = sprintf "%s.2016.txt" ticker

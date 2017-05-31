@@ -1,5 +1,5 @@
-﻿open Minimalist.Data
-open Minimalist.Detector
+﻿open Minimalist.Core.Data
+open Minimalist.Core.Detector
 open System
 open System.IO
 open System.Reflection
