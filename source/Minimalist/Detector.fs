@@ -149,19 +149,6 @@ let private findMinsBinary (quotes : Quotation[]) =
     |> Seq.toList
 
 
-//todo: why not take even more direct dependency, seq<Quotation> ?
-let findMaxes contentLines =
-    contentLines
-    |> Seq.mapi parse
-    |> Seq.toArray
-    |> findMaxesBinary
-
-let findMins contentLines =
-    contentLines
-    |> Seq.mapi parse
-    |> Seq.toArray
-    |> findMinsBinary
-
 let findExtrema quotations =
     let mins = findMinsBinary quotations |> Seq.map (fun q -> Min q)
     let maxes = findMaxesBinary quotations |> Seq.map (fun q -> Max q)

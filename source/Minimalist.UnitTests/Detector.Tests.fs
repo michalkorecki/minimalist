@@ -8,14 +8,28 @@ open System.Reflection
 open Minimalist.Data
 open Minimalist.Detector
 
-let loadTestData ticker =
+let loadQuotations ticker =
     let file = sprintf "%s.2016.txt" ticker
     let assembly = Assembly.GetExecutingAssembly()
     use resourceStream = assembly.GetManifestResourceStream(file)
     use reader = new StreamReader(resourceStream)
-    reader
-        .ReadToEnd()
-        .Split([|Environment.NewLine|], StringSplitOptions.RemoveEmptyEntries)
+    let lines =
+        reader
+            .ReadToEnd()
+            .Split([|Environment.NewLine|], StringSplitOptions.RemoveEmptyEntries)
+    lines
+    |> Seq.mapi parse
+    |> Seq.toArray
+
+let filterMaxes extrema =
+    extrema
+    |> Seq.choose (fun e -> match e with | Max v -> Some v | _ -> None)
+    |> Seq.toList
+    
+let filterMins extrema =
+    extrema
+    |> Seq.choose (fun e -> match e with | Min v -> Some v | _ -> None)
+    |> Seq.toList
 
 let shouldOccurAt year month day quotation =
     quotation.Date |> should equal (new DateTime(year, month, day))
@@ -29,7 +43,11 @@ let shouldNotContain year month day quotations =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (core detection)`` () =
-    let maxes = "11b" |> loadTestData |> findMaxes
+    let maxes = 
+        "11b"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMaxes
 
     maxes |> shouldContain 2016 01 13
     maxes |> shouldContain 2016 01 29
@@ -42,7 +60,11 @@ let ``Maxes are found for 11B quotations (core detection)`` () =
 
 [<Test>]
 let ``Mins are found for 11B quotations (core detection)`` () =
-    let mins = "11b" |> loadTestData |> findMins
+    let mins = 
+        "11b"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMins
 
     mins |> shouldContain 2016 01 04
     mins |> shouldContain 2016 02 17
@@ -56,7 +78,11 @@ let ``Mins are found for 11B quotations (core detection)`` () =
 
 [<Test>]
 let ``11B maxes detection does not return definitely wrong maxes`` () =
-    let maxes = "11b" |> loadTestData |> findMaxes
+    let maxes = 
+        "11b"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMaxes
 
     maxes |> shouldNotContain 2016 02 26
     maxes |> shouldNotContain 2016 03 31
@@ -70,7 +96,11 @@ let ``11B maxes detection does not return definitely wrong maxes`` () =
 
 [<Test>]
 let ``Maxes are found for 11B quotations (precise detection)`` () =
-    let maxes = "11b" |> loadTestData |> findMaxes
+    let maxes = 
+        "11b"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMaxes
 
     maxes |> should haveLength 8
     maxes.[0] |> shouldOccurAt 2016 01 13
@@ -84,7 +114,11 @@ let ``Maxes are found for 11B quotations (precise detection)`` () =
 
 [<Test>]
 let ``Maxes are found for PGN quotations (precise detection)`` () =
-    let maxes = "pgn" |> loadTestData |> findMaxes
+    let maxes = 
+        "pgn"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMaxes
 
     maxes |> should haveLength 6
     maxes.[0] |> shouldOccurAt 2016 01 04
@@ -96,7 +130,11 @@ let ``Maxes are found for PGN quotations (precise detection)`` () =
 
 [<Test>]
 let ``Maxes are found for WWL quotations (precise detection)`` () =
-    let maxes = "wwl" |> loadTestData |> findMaxes
+    let maxes =
+        "wwl"
+        |> loadQuotations
+        |> findExtrema
+        |> filterMaxes
 
     maxes |> should haveLength 5
     maxes.[0] |> shouldOccurAt 2016 01 04
