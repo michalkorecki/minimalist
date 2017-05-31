@@ -2,12 +2,10 @@
 open Minimalist.Core.Detector
 open System
 open System.IO
-open System.Reflection
 
-let loadQuotes rangeStart rangeEnd =
-    let assembly = Assembly.GetExecutingAssembly()
-    use resourceStream = assembly.GetManifestResourceStream("11b.dat")
-    use reader = new StreamReader(resourceStream)
+let loadQuotes path rangeStart rangeEnd =
+    use file = File.OpenRead(path)
+    use reader = new StreamReader(file)
     reader
         .ReadToEnd()
         .Split([|Environment.NewLine|], StringSplitOptions.RemoveEmptyEntries)
@@ -20,7 +18,12 @@ let loadQuotes rangeStart rangeEnd =
 
 [<EntryPoint>]
 let main argv =
-    let quotes = loadQuotes 20160104 20161231 
+    let path = argv |> Seq.head
+    let ticker = Path.GetFileNameWithoutExtension(path)
+
+    printfn "Running for %s in %s" ticker path
+
+    let quotes = loadQuotes path 20160104 20161231 
     let extrema =
         quotes
         |> Seq.mapi parse
