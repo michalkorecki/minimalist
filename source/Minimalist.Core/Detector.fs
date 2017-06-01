@@ -44,42 +44,30 @@ let private directionalMovementIndicator skippedCount quotes =
 
     (dmPlus / trueRange, dmMinus / trueRange)
 
-let printDmLog key info dmPlus dmMinus =
-    printfn "%s (%s): DM+=%.2f DM-=%.2f" key info dmPlus dmMinus
-    
-
 let rec private findBullTrendEndBefore range quotes changed =
     if isExhausted range then
-        printfn "max-bull range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
         if dmPlusIndicator > dmMinusIndicator then
-            printDmLog "max-bull" "+>-" dmPlusIndicator dmMinusIndicator
             findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
         else if changed < DmChangeCount then
-            printDmLog "max-bull" "failed" dmPlusIndicator dmMinusIndicator
             findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
-            printDmLog "max-bull" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
 let rec private findBearTrendEndAfter range quotes changed =
     if isExhausted range then
-        printfn "max-bear range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmMinusIndicator > dmPlusIndicator then
-            printDmLog "max-bear" "->+" dmPlusIndicator dmMinusIndicator
             findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
         else if changed < DmChangeCount then
-            printDmLog "max-bear" "failed" dmPlusIndicator dmMinusIndicator
             findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
-            printDmLog "max-bear" "failed" dmPlusIndicator dmMinusIndicator
             Some (rangeStart + 2)
    
 let private findMaxesBinary (quotes : Quotation[]) =
@@ -93,7 +81,6 @@ let private findMaxesBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.maxBy (fun q -> q.High)
-            printfn "new-max = %A" max.Date
             let bearTrendEnd = findBearTrendEndAfter (max.Index, rangeEnd) quotes 0
             let bear = 
                 match bearTrendEnd with
@@ -117,37 +104,28 @@ let private findMaxesBinary (quotes : Quotation[]) =
 
 let rec private findBullTrendEndAfter range quotes changed =
     if isExhausted range then
-        printfn "min-bull range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmPlusIndicator > dmMinusIndicator then
-            printDmLog "min-bull" "+>-" dmPlusIndicator dmMinusIndicator
             findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
         else if changed < DmChangeCount then
-            printDmLog "min-bull" "failed" dmPlusIndicator dmMinusIndicator
             findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
-            printDmLog "min-bull" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeStart + 2)
 
 let rec private findBearTrendEndBefore range quotes changed =
     if isExhausted range then
-        printfn "min-bear range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
-        printfn "%A" range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
         if dmMinusIndicator > dmPlusIndicator then
-            printDmLog "min-bear" "->+" dmPlusIndicator dmMinusIndicator 
             findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
         else if changed < DmChangeCount then
-            printDmLog "min-bear" "failed" dmPlusIndicator dmMinusIndicator
             findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
-            printDmLog "min-bear" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
 let private findMinsBinary (quotes : Quotation[]) =
@@ -160,7 +138,6 @@ let private findMinsBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.minBy (fun q -> q.Low)
-            printfn "new-min = %A" min.Date
             let bullTrendEnd = findBullTrendEndAfter (min.Index, rangeEnd) quotes 0
             let bull = 
                 match bullTrendEnd with
