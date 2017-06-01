@@ -12,7 +12,7 @@ type Extremum =
 let private DmSeekSize = 5
 
 [<Literal>]
-let private DmChangeCount = 1
+let private DmChangeCount = 2
 
 let isExhausted (rangeStart, rangeEnd) =
     rangeStart + DmSeekSize > rangeEnd
@@ -192,28 +192,22 @@ let findExtrema quotations =
         match e with 
         | Max q 
         | Min q -> q.Date)
-    //|> Seq.fold (fun acc extremum ->
-    //        let distance idxHead idxCurrent =
-    //            idxCurrent - idxHead < 10
-    //        match acc, extremum with 
-    //        | [], _ ->
-    //            [extremum]
-    //        | (Min head)::tail, Min current ->
-    //            if head.Low < current.Low then
-    //                acc
-    //            else if (distance head.Index current.Index) then
-    //                (Min current)::tail
-    //            else
-    //                extremum::acc
-    //        | (Max head)::tail, Max current ->
-    //            if head.High > current.High then
-    //                acc
-    //            else if (distance head.Index current.Index) then
-    //                (Max current)::tail
-    //            else
-    //                extremum::acc
-    //        | _, _ ->
-    //            extremum::acc) []
-    //|> Seq.rev
+    |> Seq.fold (fun acc extremum ->
+            match acc, extremum with 
+            | [], _ ->
+                [extremum]
+            | (Min head)::tail, Min current ->
+                if head.Low < current.Low then
+                    acc
+                else
+                    extremum::tail
+            | (Max head)::tail, Max current ->
+                if head.High > current.High then
+                    acc
+                else
+                    extremum::tail
+            | _, _ ->
+                extremum::acc) []
+    |> Seq.rev
 
     
