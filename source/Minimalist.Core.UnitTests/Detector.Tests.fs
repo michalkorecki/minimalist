@@ -95,4 +95,31 @@ let ``Extrema are found for PGN in volatile sideways trend`` () =
 
 [<Test>]
 let ``Extrema are found for WWL in strong bear trend`` () =
-    true |> should equal false
+    let extrema = 
+        "wwl"
+        |> loadQuotations
+        |> findExtrema
+
+    extrema |> shouldContainMax |> at 2016 01 04
+    extrema |> shouldContainMin |> at 2016 01 22
+    extrema |> shouldContainMax |> at 2016 02 09
+    extrema |> shouldContainMin |> at 2016 02 26
+    extrema |> shouldContainMax |> at 2016 03 02
+    extrema |> shouldContainMin |> at 2016 03 31
+    extrema |> shouldContainMax |> at 2016 04 25
+    extrema |> shouldContainMin |> at 2016 05 18
+    extrema |> shouldContainMax |> at 2016 05 30
+    extrema |> shouldContainMin |> at 2016 06 02 //todo: questionable
+    extrema |> shouldContainMax |> at 2016 06 06 //todo: questionable
+    extrema |> shouldContainMin |> at 2016 06 15
+    extrema |> shouldContainMax |> at 2016 06 23
+    extrema |> shouldContainMin |> at 2016 07 12
+    extrema |> shouldContainMax |> at 2016 07 19
+    extrema |> shouldContainMin |> at 2016 08 01
+    extrema |> shouldContainMax |> at 2016 08 24 //todo: questionable
+    extrema |> shouldContainMin |> at 2016 08 31
+    extrema |> shouldContainMax |> at 2016 09 06
+    extrema |> shouldContainMin |> at 2016 09 30 //todo: this is interesting
+    extrema |> shouldContainMax |> at 2016 09 30 //todo: this is interesting
+    extrema |> shouldContainMin |> at 2016 10 13
+    extrema |> shouldContainMax |> at 2016 12 30
