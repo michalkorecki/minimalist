@@ -150,7 +150,7 @@ let rec private findBearTrendEndBefore range quotes changed =
             printDmLog "min-bear" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
-let findMinsBinary (quotes : Quotation[]) =
+let private findMinsBinary (quotes : Quotation[]) =
     let rec findMinsBinaryImpl range (results : list<Quotation>) =
         let rangeStart, rangeEnd = range
         if rangeStart >= rangeEnd then
