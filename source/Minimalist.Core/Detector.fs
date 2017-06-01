@@ -8,10 +8,14 @@ type Extremum =
     | Min of Quotation
     | Max of Quotation
 
-let private dmSeekSize = 5
+[<Literal>]
+let private DmSeekSize = 5
+
+[<Literal>]
+let private DmChangeCount = 2
 
 let isExhausted (rangeStart, rangeEnd) =
-    rangeStart + dmSeekSize > rangeEnd
+    rangeStart + DmSeekSize > rangeEnd
 
 let private narrowTo (rangeStart, rangeEnd) quotes =
     quotes
@@ -23,7 +27,7 @@ let private directionalMovementIndicator skippedCount quotes =
     let pairs =
         quotes
         |> Seq.skip skippedCount
-        |> Seq.take (dmSeekSize + 1)
+        |> Seq.take (DmSeekSize + 1)
         |> Seq.pairwise
     let trueRange =
         pairs
@@ -49,11 +53,11 @@ let rec private findBullTrendEndBefore range quotes changed =
         None
     else
         let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - dmSeekSize) quotes
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
         if dmPlusIndicator > dmMinusIndicator then
             printDmLog "max-bull" "+>-" dmPlusIndicator dmMinusIndicator
             findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
-        else if changed < 2 then
+        else if changed < DmChangeCount then
             printDmLog "max-bull" "failed" dmPlusIndicator dmMinusIndicator
             findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
@@ -69,7 +73,7 @@ let rec private findBearTrendEndAfter range quotes changed =
         if dmMinusIndicator > dmPlusIndicator then
             printDmLog "max-bear" "->+" dmPlusIndicator dmMinusIndicator
             findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
-        else if changed < 2 then
+        else if changed < DmChangeCount then
             printDmLog "max-bear" "failed" dmPlusIndicator dmMinusIndicator
             findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
@@ -118,7 +122,7 @@ let rec private findBullTrendEndAfter range quotes changed =
         if dmPlusIndicator > dmMinusIndicator then
             printDmLog "min-bull" "+>-" dmPlusIndicator dmMinusIndicator
             findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
-        else if changed < 2 then
+        else if changed < DmChangeCount then
             printDmLog "min-bull" "failed" dmPlusIndicator dmMinusIndicator
             findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
@@ -134,7 +138,7 @@ let rec private findBearTrendEndBefore range quotes changed =
         if dmMinusIndicator > dmPlusIndicator then
             printDmLog "min-bear" "->+" dmPlusIndicator dmMinusIndicator 
             findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
-        else if changed < 2 then
+        else if changed < DmChangeCount then
             printDmLog "min-bear" "failed" dmPlusIndicator dmMinusIndicator
             findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
