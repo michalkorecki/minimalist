@@ -21,9 +21,10 @@ let main argv =
     let path = argv |> Seq.head
     let ticker = Path.GetFileNameWithoutExtension(path)
 
-    printfn "Running for %s in %s" ticker path
+    printfn "Ticker: %s" ticker
+    printfn "File:   %s" path
 
-    let quotes = loadQuotes path 20160104 20161231 
+    let quotes = loadQuotes path 20160104 20161231
     let extrema =
         quotes
         |> Seq.mapi parse
