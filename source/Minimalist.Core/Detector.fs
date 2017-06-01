@@ -40,27 +40,40 @@ let private directionalMovementIndicator skippedCount quotes =
 
     (dmPlus / trueRange, dmMinus / trueRange)
 
+let printDmLog key info dmPlus dmMinus =
+    printfn "%s (%s): DM+=%.2f DM-=%.2f" key info dmPlus dmMinus
+    
 
-let rec private findBullTrendEndBefore range quotes =
+let rec private findBullTrendEndBefore range quotes changed =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - dmSeekSize) quotes
         if dmPlusIndicator > dmMinusIndicator then
-            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes
+            printDmLog "max-bull" "+>-" dmPlusIndicator dmMinusIndicator
+            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
+        else if changed < 2 then
+            printDmLog "max-bull" "failed" dmPlusIndicator dmMinusIndicator
+            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
+            printDmLog "max-bull" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
-let rec private findBearTrendEndAfter range quotes =
+let rec private findBearTrendEndAfter range quotes changed =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmMinusIndicator > dmPlusIndicator then
-            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes
+            printDmLog "max-bear" "->+" dmPlusIndicator dmMinusIndicator
+            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
+        else if changed < 2 then
+            printDmLog "max-bear" "failed" dmPlusIndicator dmMinusIndicator
+            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
+            printDmLog "max-bear" "failed" dmPlusIndicator dmMinusIndicator
             Some (rangeStart + 2)
    
 let private findMaxesBinary (quotes : Quotation[]) =
@@ -74,14 +87,15 @@ let private findMaxesBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.maxBy (fun q -> q.High)
-            let bearTrendEnd = findBearTrendEndAfter (max.Index, rangeEnd) quotes
+            printfn "new-max = %A" max.Date
+            let bearTrendEnd = findBearTrendEndAfter (max.Index, rangeEnd) quotes 0
             let bear = 
                 match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bullTrendEnd = findBullTrendEndBefore (rangeStart, max.Index) quotes
+            let bullTrendEnd = findBullTrendEndBefore (rangeStart, max.Index) quotes 0
             let bull =
                 match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
@@ -95,26 +109,36 @@ let private findMaxesBinary (quotes : Quotation[]) =
     |> Seq.distinct
     |> Seq.toList
 
-let rec private findBullTrendEndAfter range quotes =
+let rec private findBullTrendEndAfter range quotes changed =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmPlusIndicator > dmMinusIndicator then
-            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes
+            printDmLog "min-bull" "+>-" dmPlusIndicator dmMinusIndicator
+            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
+        else if changed < 2 then
+            printDmLog "min-bull" "failed" dmPlusIndicator dmMinusIndicator
+            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
         else
+            printDmLog "min-bull" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeStart + 2)
 
-let rec private findBearTrendEndBefore range quotes =
+let rec private findBearTrendEndBefore range quotes changed =
     if isExhausted range then
         None
     else
         let rangeStart, rangeEnd = range
         let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
         if dmMinusIndicator > dmPlusIndicator then
-            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes
+            printDmLog "min-bear" "->+" dmPlusIndicator dmMinusIndicator 
+            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
+        else if changed < 2 then
+            printDmLog "min-bear" "failed" dmPlusIndicator dmMinusIndicator
+            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
         else
+            printDmLog "min-bear" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
 let private findMinsBinary (quotes : Quotation[]) =
@@ -127,14 +151,15 @@ let private findMinsBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.minBy (fun q -> q.Low)
-            let bullTrendEnd = findBullTrendEndAfter (min.Index, rangeEnd) quotes
+            printfn "new-min = %A" min.Date
+            let bullTrendEnd = findBullTrendEndAfter (min.Index, rangeEnd) quotes 0
             let bull = 
                 match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMinsBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bearTrendEnd = findBearTrendEndBefore (rangeStart, min.Index) quotes
+            let bearTrendEnd = findBearTrendEndBefore (rangeStart, min.Index) quotes 0
             let bear =
                 match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
@@ -159,19 +184,25 @@ let findExtrema quotations =
         | Max q 
         | Min q -> q.Date)
     |> Seq.fold (fun acc extremum ->
+            let distance idxHead idxCurrent =
+                idxCurrent - idxHead < 10
             match acc, extremum with 
             | [], _ ->
                 [extremum]
             | (Min head)::tail, Min current ->
                 if head.Low < current.Low then
                     acc
-                else
+                else if (distance head.Index current.Index) then
                     (Min current)::tail
+                else
+                    extremum::acc
             | (Max head)::tail, Max current ->
                 if head.High > current.High then
                     acc
-                else
+                else if (distance head.Index current.Index) then
                     (Max current)::tail
+                else
+                    extremum::acc
             | _, _ ->
                 extremum::acc) []
     |> Seq.rev
