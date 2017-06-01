@@ -12,7 +12,7 @@ type Extremum =
 let private DmSeekSize = 5
 
 [<Literal>]
-let private DmChangeCount = 2
+let private DmChangeCount = 1
 
 let isExhausted (rangeStart, rangeEnd) =
     rangeStart + DmSeekSize > rangeEnd
@@ -50,6 +50,7 @@ let printDmLog key info dmPlus dmMinus =
 
 let rec private findBullTrendEndBefore range quotes changed =
     if isExhausted range then
+        printfn "max-bull range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
@@ -66,6 +67,7 @@ let rec private findBullTrendEndBefore range quotes changed =
 
 let rec private findBearTrendEndAfter range quotes changed =
     if isExhausted range then
+        printfn "max-bear range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
@@ -115,6 +117,7 @@ let private findMaxesBinary (quotes : Quotation[]) =
 
 let rec private findBullTrendEndAfter range quotes changed =
     if isExhausted range then
+        printfn "min-bull range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
@@ -131,10 +134,12 @@ let rec private findBullTrendEndAfter range quotes changed =
 
 let rec private findBearTrendEndBefore range quotes changed =
     if isExhausted range then
+        printfn "min-bear range exhausted"
         None
     else
         let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
+        printfn "%A" range
+        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
         if dmMinusIndicator > dmPlusIndicator then
             printDmLog "min-bear" "->+" dmPlusIndicator dmMinusIndicator 
             findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
@@ -145,7 +150,7 @@ let rec private findBearTrendEndBefore range quotes changed =
             printDmLog "min-bear" "returning" dmPlusIndicator dmMinusIndicator
             Some (rangeEnd - 2)
 
-let private findMinsBinary (quotes : Quotation[]) =
+let findMinsBinary (quotes : Quotation[]) =
     let rec findMinsBinaryImpl range (results : list<Quotation>) =
         let rangeStart, rangeEnd = range
         if rangeStart >= rangeEnd then
@@ -187,28 +192,28 @@ let findExtrema quotations =
         match e with 
         | Max q 
         | Min q -> q.Date)
-    |> Seq.fold (fun acc extremum ->
-            let distance idxHead idxCurrent =
-                idxCurrent - idxHead < 10
-            match acc, extremum with 
-            | [], _ ->
-                [extremum]
-            | (Min head)::tail, Min current ->
-                if head.Low < current.Low then
-                    acc
-                else if (distance head.Index current.Index) then
-                    (Min current)::tail
-                else
-                    extremum::acc
-            | (Max head)::tail, Max current ->
-                if head.High > current.High then
-                    acc
-                else if (distance head.Index current.Index) then
-                    (Max current)::tail
-                else
-                    extremum::acc
-            | _, _ ->
-                extremum::acc) []
-    |> Seq.rev
+    //|> Seq.fold (fun acc extremum ->
+    //        let distance idxHead idxCurrent =
+    //            idxCurrent - idxHead < 10
+    //        match acc, extremum with 
+    //        | [], _ ->
+    //            [extremum]
+    //        | (Min head)::tail, Min current ->
+    //            if head.Low < current.Low then
+    //                acc
+    //            else if (distance head.Index current.Index) then
+    //                (Min current)::tail
+    //            else
+    //                extremum::acc
+    //        | (Max head)::tail, Max current ->
+    //            if head.High > current.High then
+    //                acc
+    //            else if (distance head.Index current.Index) then
+    //                (Max current)::tail
+    //            else
+    //                extremum::acc
+    //        | _, _ ->
+    //            extremum::acc) []
+    //|> Seq.rev
 
     
