@@ -9,6 +9,8 @@ Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.Core.UnitTests",
 EndProject
 Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.App", "Minimalist.App\Minimalist.App.fsproj", "{14198A17-B50C-47F7-87DD-19DA6CFAFF15}"
 EndProject
+Project("{F2A71F9B-5D33-465A-A702-920D77279786}") = "Minimalist.Endpoint", "Minimalist.Endpoint\Minimalist.Endpoint.fsproj", "{281FBCC8-BEF5-4FE5-88A0-5F3C7CA3DE65}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -27,6 +29,10 @@ Global
 		{14198A17-B50C-47F7-87DD-19DA6CFAFF15}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{14198A17-B50C-47F7-87DD-19DA6CFAFF15}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{14198A17-B50C-47F7-87DD-19DA6CFAFF15}.Release|Any CPU.Build.0 = Release|Any CPU
+		{281FBCC8-BEF5-4FE5-88A0-5F3C7CA3DE65}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{281FBCC8-BEF5-4FE5-88A0-5F3C7CA3DE65}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{281FBCC8-BEF5-4FE5-88A0-5F3C7CA3DE65}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{281FBCC8-BEF5-4FE5-88A0-5F3C7CA3DE65}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
