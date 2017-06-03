@@ -47,6 +47,7 @@
     <Compile Include="Data.fs" />
     <Compile Include="Indicators.fs" />
     <Compile Include="Detector.fs" />
+    <Compile Include="Extrema.fs" />
   </ItemGroup>
   <PropertyGroup>
     <MinimumVisualStudioVersion Condition="'$(MinimumVisualStudioVersion)' == ''">11</MinimumVisualStudioVersion>
