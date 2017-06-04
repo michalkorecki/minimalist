@@ -5,8 +5,6 @@ open System.IO
 open Minimalist.Core.Data
 open Minimalist.Core.Detector
 
-type Ticker = Ticker of string
-
 //todo: bad naming, clashing with detector code; think about domain
 type ExtremumType =
     | Minimum
@@ -20,12 +18,13 @@ type Extremum = {
 
 type Extrema =
     | Extrema of seq<Extremum>
-    | Error of string
+    | ErrorTickerNotFound of string
+    | Error
 
 let extrema ticker year =
     let quotationsStorage = @"D:\Stock\quotes\poland_d\wse stocks"
     try
-        let quotationsFile = sprintf "%A.txt" ticker
+        let quotationsFile = sprintf "%s.txt" ticker
         let quotationsFilePath = Path.Combine(quotationsStorage, quotationsFile)
         use file = File.OpenRead(quotationsFilePath)
         use reader = new StreamReader(file)
@@ -48,5 +47,5 @@ let extrema ticker year =
                 | Max q -> { Type = Maximum; Value = q.High; Date = q.Date })
         Extrema extrema
     with 
-        | :? FileNotFoundException -> Error "File not found"
-        | _ -> Error "Failed"
+        | :? FileNotFoundException -> ErrorTickerNotFound ticker
+        | _ -> Error

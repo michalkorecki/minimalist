@@ -4,6 +4,8 @@ open Minimalist.Core.Data
 open Minimalist.Core.Indicators
 open System
 
+
+//todo: detector (is a poor name, btw) should return (ExtremaType, Quotation) tuples
 type Extremum = 
     | Min of Quotation
     | Max of Quotation
@@ -14,7 +16,7 @@ let private DmSeekSize = 5
 [<Literal>]
 let private DmChangeCount = 2
 
-let isExhausted (rangeStart, rangeEnd) =
+let private isExhausted (rangeStart, rangeEnd) =
     rangeStart + DmSeekSize > rangeEnd
 
 let private narrowTo (rangeStart, rangeEnd) quotes =

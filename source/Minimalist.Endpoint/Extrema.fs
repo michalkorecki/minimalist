@@ -3,28 +3,41 @@
 open Nancy
 open Minimalist.Core.Extrema
 
+let private parseParameter (parameters : obj) name converter =
+    let raw = (parameters :?> Nancy.DynamicDictionary).[name]
+    let text = raw.ToString()
+    converter text
+
 type ExtremaModule() as self =
     inherit NancyModule()
     do
-        //todo: refactor, it's not the greatest
         self.Get.[@"extrema/(?i)(?<ticker>[A-Z0-9\.]{2,})/(?<year>[0-9]{4})"] <- fun parameters ->
-            let ticker = (parameters :?> Nancy.DynamicDictionary).["ticker"]
-            let year = (parameters :?> Nancy.DynamicDictionary).["year"]
+            let ticker = parseParameter parameters "ticker" id
+            let year = parseParameter parameters "year" System.Int32.Parse
 
-            let extrema = extrema ticker year
+            let toDictionary extremum =
+                dict [
+                    "type", extremum.Type.ToString();
+                    "value", extremum.Value.ToString();
+                    "date", extremum.Date.ToString()]
+
             let response =
-                match extrema with
-                | Extrema ex ->
-                    let x =
-                        ex 
-                        |> Seq.map (fun e -> dict [
-                            "type", e.Type.ToString();
-                            "value", e.Value.ToString();
-                            "date", e.Date.ToString()])
+                extrema ticker year
+                |> function
+                    | Extrema extrema ->
+                        extrema 
+                        |> Seq.map toDictionary
                         |> Seq.toArray
-                    self.Response.AsJson(x)                        
-                | Error message ->
-                    self.Response.AsJson([message])
+                        |> self.Response.AsJson                        
+                    | ErrorTickerNotFound ticker ->
+                        let response = new Response()
+                        response.StatusCode <- HttpStatusCode.NotFound
+                        response.ReasonPhrase <- sprintf "Resource not found: %s" ticker
+                        response
+                    | Error ->
+                        let response = new Response()
+                        response.StatusCode <- HttpStatusCode.InternalServerError
+                        response
             
             response :> obj
 
