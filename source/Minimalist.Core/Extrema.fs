@@ -5,29 +5,10 @@ open System.IO
 open Minimalist.Core.Data
 open Minimalist.Core.Detector
 
-//todo: bad naming, clashing with detector code; think about domain
-type ExtremumType =
-    | Minimum
-    | Maximum
-
-type Extremum = {
-    Type : ExtremumType
-    Value : double;
-    Date : DateTime;
-}
-
-type Extrema =
-    | Extrema of seq<Extremum>
-    | ErrorTickerNotFound of string
-    | Error
-
-let extrema ticker year =
-    let quotationsStorage = @"D:\Stock\quotes\poland_d\wse stocks"
+let private loadQuotations year file =
     try
-        let quotationsFile = sprintf "%s.txt" ticker
-        let quotationsFilePath = Path.Combine(quotationsStorage, quotationsFile)
-        use file = File.OpenRead(quotationsFilePath)
-        use reader = new StreamReader(file)
+        use fileStream = File.OpenRead(file)
+        use reader = new StreamReader(fileStream)
         let quotations =
             reader
                 .ReadToEnd()
@@ -39,13 +20,24 @@ let extrema ticker year =
             |> Seq.rev
             |> Seq.mapi parse
             |> Seq.toArray
-        let extrema =
-            findExtrema quotations
-            |> Seq.map (fun e ->
-                match e with
-                | Min q -> { Type = Minimum; Value = q.Low; Date = q.Date }
-                | Max q -> { Type = Maximum; Value = q.High; Date = q.Date })
-        Extrema extrema
-    with 
-        | :? FileNotFoundException -> ErrorTickerNotFound ticker
-        | _ -> Error
+        Some quotations
+    with
+        _ -> None
+
+let private getQuotationFilePath ticker =
+    //todo: might be better to pass this as dependency
+    let quotationsStorage = @"D:\Stock\quotes\poland_d\wse stocks"
+    let quotationsFile = sprintf "%s.txt" ticker
+    Path.Combine(quotationsStorage, quotationsFile)
+
+
+let extrema ticker year =
+    getQuotationFilePath ticker
+    |> loadQuotations year
+    |> function
+        | Some q ->
+            findExtrema q
+            |> Seq.map (fun (t, q) -> { Type = t; Value = q.Low; Date = q.Date })
+            |> Some
+        | None ->
+            None

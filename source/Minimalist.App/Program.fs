@@ -24,18 +24,10 @@ let main argv =
     printfn "Ticker: %s" ticker
     printfn "File:   %s" path
 
-    let quotes = loadQuotes path 20160104 20161231
-    let extrema =
-        quotes
-        |> Seq.mapi parse
-        |> Seq.toArray
-        |> findExtrema
+    loadQuotes path 20160104 20161231
+    |> Seq.mapi parse
+    |> Seq.toArray
+    |> findExtrema
+    |> Seq.iter (fun (t, q) -> printf "%A %A" t q.Date)
 
-    extrema
-        |> Seq.iter (fun e -> 
-            match e with 
-            | Max q ->
-                printfn "max %A" q.Date
-            | Min q -> 
-                printfn "min %A" q.Date)
     0

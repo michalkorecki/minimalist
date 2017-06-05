@@ -2,6 +2,16 @@
 
 open System
 
+type ExtremumType =
+    | Minimum
+    | Maximum
+
+type Extremum = {
+    Type : ExtremumType
+    Value : double;
+    Date : DateTime;
+}
+
 type Quotation = {
     Open : double;
     High : double;

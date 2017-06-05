@@ -22,13 +22,13 @@ let loadQuotations ticker =
     |> Seq.toArray
 
 let shouldContainMin extrema =
-    extrema |> Seq.choose (fun e -> match e with | Min q -> Some q | _ -> None)
+    extrema |> Seq.filter (fun (t, q) -> t = Minimum)
 
 let shouldContainMax extrema =
-    extrema |> Seq.choose (fun e -> match e with | Max q -> Some q | _ -> None)
+    extrema |> Seq.filter (fun (t, q) -> t = Maximum)
 
 let at year month day quotations =
-    quotations |> Seq.map (fun q -> q.Date) |> should contain (new DateTime(year, month, day))
+    quotations |> Seq.map (fun (t, q) -> q.Date) |> should contain (new DateTime(year, month, day))
 
 [<Test>]
 let ``Extrema are found for 11B in strong bull trend`` () =

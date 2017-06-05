@@ -1,6 +1,7 @@
-﻿module Minimalist.Endpoint.Extrema
+﻿module Minimalist.Endpoint.ExtremaModule
 
 open Nancy
+open Minimalist.Core.Data
 open Minimalist.Core.Extrema
 
 let private parseParameter (parameters : obj) name converter =
@@ -24,19 +25,15 @@ type ExtremaModule() as self =
             let response =
                 extrema ticker year
                 |> function
-                    | Extrema extrema ->
+                    | Some extrema ->
                         extrema 
                         |> Seq.map toDictionary
                         |> Seq.toArray
                         |> self.Response.AsJson                        
-                    | ErrorTickerNotFound ticker ->
+                    | None ->
                         let response = new Response()
                         response.StatusCode <- HttpStatusCode.NotFound
                         response.ReasonPhrase <- sprintf "Resource not found: %s" ticker
-                        response
-                    | Error ->
-                        let response = new Response()
-                        response.StatusCode <- HttpStatusCode.InternalServerError
                         response
             
             response :> obj

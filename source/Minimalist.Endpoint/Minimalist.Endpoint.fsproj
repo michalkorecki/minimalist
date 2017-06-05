@@ -56,7 +56,7 @@
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Host.fs" />
-    <Compile Include="Extrema.fs" />
+    <Compile Include="ExtremaModule.fs" />
     <Compile Include="Program.fs" />
     <None Include="App.config" />
     <Content Include="packages.config" />

@@ -5,11 +5,6 @@ open Minimalist.Core.Indicators
 open System
 
 
-//todo: detector (is a poor name, btw) should return (ExtremaType, Quotation) tuples
-type Extremum = 
-    | Min of Quotation
-    | Max of Quotation
-
 [<Literal>]
 let private DmSeekSize = 5
 
@@ -163,24 +158,22 @@ let private findMinsBinary (quotes : Quotation[]) =
 
 
 let findExtrema quotations =
-    let mins = findMinsBinary quotations |> Seq.map (fun q -> Min q)
-    let maxes = findMaxesBinary quotations |> Seq.map (fun q -> Max q)
+    let mins = findMinsBinary quotations |> Seq.map (fun q -> (Minimum, q))
+    let maxes = findMaxesBinary quotations |> Seq.map (fun q -> (Maximum, q))
     [mins;maxes]
     |> Seq.concat
-    |> Seq.sortBy (fun e ->
-        match e with 
-        | Max q 
-        | Min q -> q.Date)
-    |> Seq.fold (fun acc extremum ->
+    |> Seq.sortBy (fun (_, q) -> q.Date)
+    |> Seq.fold (
+        fun acc extremum ->
             match acc, extremum with 
             | [], _ ->
                 [extremum]
-            | (Min head)::tail, Min current ->
+            | (Minimum, head)::tail, (Minimum, current) ->
                 if head.Low < current.Low then
                     acc
                 else
                     extremum::tail
-            | (Max head)::tail, Max current ->
+            | (Maximum, head)::tail, (Maximum, current) ->
                 if head.High > current.High then
                     acc
                 else
