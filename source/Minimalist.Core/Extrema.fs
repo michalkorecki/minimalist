@@ -37,7 +37,10 @@ let extrema ticker year =
     |> function
         | Some q ->
             findExtrema q
-            |> Seq.map (fun (t, q) -> { Type = t; Value = q.Low; Date = q.Date })
+            |> Seq.map (fun (t, q) -> 
+                match t with
+                | Minimum -> { Type = t; Value = q.Low; Date = q.Date }
+                | Maximum -> { Type = t; Value = q.High; Date = q.Date })
             |> Some
         | None ->
             None
