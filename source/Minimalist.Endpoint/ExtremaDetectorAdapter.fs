@@ -1,9 +1,9 @@
-﻿module Minimalist.Core.Extrema
+﻿module Minimalist.Core.ExtremaDetectorAdapter
 
 open System
 open System.IO
 open Minimalist.Core.Data
-open Minimalist.Core.Detector
+open Minimalist.Core.ExtremaDetector
 
 let private loadQuotations year file =
     try
@@ -13,26 +13,20 @@ let private loadQuotations year file =
             reader
                 .ReadToEnd()
                 .Split([|Environment.NewLine|], StringSplitOptions.RemoveEmptyEntries)
-            |> Seq.rev
             |> Seq.map (fun line -> (line, line.Split(',')))
             |> Seq.filter (fun (line, parts) -> parts.[0].Substring(0, 4) = year.ToString())
             |> Seq.map fst
-            |> Seq.rev
             |> Seq.mapi parse
             |> Seq.toArray
         Some quotations
     with
         _ -> None
 
-let private getQuotationFilePath ticker =
-    //todo: might be better to pass this as dependency
-    let quotationsStorage = @"D:\Stock\quotes\poland_d\wse stocks"
+
+let findExtrema ticker year storage =
     let quotationsFile = sprintf "%s.txt" ticker
-    Path.Combine(quotationsStorage, quotationsFile)
-
-
-let extrema ticker year =
-    getQuotationFilePath ticker
+    let quotationsFilePath = Path.Combine(storage, quotationsFile)
+    quotationsFilePath
     |> loadQuotations year
     |> function
         | Some q ->

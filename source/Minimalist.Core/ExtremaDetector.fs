@@ -1,4 +1,4 @@
-﻿module Minimalist.Core.Detector
+﻿module Minimalist.Core.ExtremaDetector
 
 open Minimalist.Core.Data
 open Minimalist.Core.Indicators

@@ -2,7 +2,8 @@
 
 open Nancy
 open Minimalist.Core.Data
-open Minimalist.Core.Extrema
+open Minimalist.Core.ExtremaDetectorAdapter
+open System.Configuration
 
 let private parseParameter (parameters : obj) name converter =
     let raw = (parameters :?> Nancy.DynamicDictionary).[name]
@@ -13,6 +14,7 @@ type ExtremaModule() as self =
     inherit NancyModule()
     do
         self.Get.[@"extrema/(?i)(?<ticker>[A-Z0-9\.]{2,})/(?<year>[0-9]{4})"] <- fun parameters ->
+            let storage = ConfigurationManager.AppSettings.["Storage"]
             let ticker = parseParameter parameters "ticker" id
             let year = parseParameter parameters "year" System.Int32.Parse
 
@@ -23,7 +25,7 @@ type ExtremaModule() as self =
                     "date", extremum.Date.ToString()]
 
             let response =
-                extrema ticker year
+                findExtrema ticker year storage
                 |> function
                     | Some extrema ->
                         extrema 

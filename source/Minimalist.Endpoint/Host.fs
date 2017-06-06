@@ -3,14 +3,16 @@
 open Nancy
 open Nancy.Hosting.Self
 open System
+open System.Configuration
 
 type MinimalistHost () =
     let mutable host = null
     
     member this.Start () =
+        let hostAddress = ConfigurationManager.AppSettings.["Host"]
         let configuration = new HostConfiguration()
         configuration.UrlReservations.CreateAutomatically <- true
-        host <- new NancyHost(new Uri("http://localhost:5702"), new DefaultNancyBootstrapper(), configuration)
+        host <- new NancyHost(new Uri(hostAddress), new DefaultNancyBootstrapper(), configuration)
         host.Start()
     
     member this.Stop() =
