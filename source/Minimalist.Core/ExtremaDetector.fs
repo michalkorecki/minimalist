@@ -41,31 +41,48 @@ let private directionalMovementIndicator skippedCount quotes =
 
     (dmPlus / trueRange, dmMinus / trueRange)
 
-let rec private findBullTrendEndBefore range quotes changed =
-    if isExhausted range then
-        None
-    else
-        let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
-        if dmPlusIndicator > dmMinusIndicator then
-            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
-        else if changed < DmChangeCount then
-            findBullTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
-        else
-            Some (rangeEnd - 2)
+type private Trend =
+    | Bear
+    | Bull
 
-let rec private findBearTrendEndAfter range quotes changed =
-    if isExhausted range then
-        None
-    else
-        let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
-        if dmMinusIndicator > dmPlusIndicator then
-            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
-        else if changed < DmChangeCount then
-            findBearTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
+let private keepSearching = function
+    | Bear -> fun (dmPlus, dmMinus) -> dmMinus > dmPlus
+    | Bull -> fun (dmPlus, dmMinus) -> dmPlus > dmMinus
+
+let private findTrendAfter trend range quotes =
+    let isTrend = keepSearching trend
+    let rec findTrendAfterImpl range quotes changed =
+        if isExhausted range then
+            None
         else
-            Some (rangeStart + 2)
+            let rangeStart, rangeEnd = range
+            let dm = directionalMovementIndicator rangeStart quotes
+            if isTrend dm then
+                findTrendAfterImpl (rangeStart + 1, rangeEnd) quotes 0
+            else if changed < DmChangeCount then
+                findTrendAfterImpl (rangeStart + 1, rangeEnd) quotes (changed + 1)
+            else
+                Some (rangeStart + 2)
+    
+    findTrendAfterImpl range quotes 0
+
+let private findTrendBefore trend range quotes =
+    let isTrend = keepSearching trend
+    let rec findTrendBeforeImpl range quotes changed =
+        if isExhausted range then
+            None
+        else
+            let rangeStart, rangeEnd = range
+            let dm = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
+            if isTrend dm then
+                findTrendBeforeImpl (rangeStart, rangeEnd - 1) quotes 0
+            else if changed < DmChangeCount then
+                findTrendBeforeImpl (rangeStart, rangeEnd - 1) quotes (changed + 1)
+            else
+                Some (rangeEnd - 2)
+    
+    findTrendBeforeImpl range quotes 0
+
    
 let private findMaxesBinary (quotes : Quotation[]) =
     //todo: make this tail recursive
@@ -78,14 +95,14 @@ let private findMaxesBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.maxBy (fun q -> q.High)
-            let bearTrendEnd = findBearTrendEndAfter (max.Index, rangeEnd) quotes 0
+            let bearTrendEnd = findTrendAfter Bear (max.Index, rangeEnd) quotes
             let bear = 
                 match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bullTrendEnd = findBullTrendEndBefore (rangeStart, max.Index) quotes 0
+            let bullTrendEnd = findTrendBefore Bull (rangeStart, max.Index) quotes
             let bull =
                 match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
@@ -99,32 +116,9 @@ let private findMaxesBinary (quotes : Quotation[]) =
     |> Seq.distinct
     |> Seq.toList
 
-let rec private findBullTrendEndAfter range quotes changed =
-    if isExhausted range then
-        None
-    else
-        let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator rangeStart quotes
-        if dmPlusIndicator > dmMinusIndicator then
-            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes 0
-        else if changed < DmChangeCount then
-            findBullTrendEndAfter (rangeStart + 1, rangeEnd) quotes (changed + 1)
-        else
-            Some (rangeStart + 2)
 
-let rec private findBearTrendEndBefore range quotes changed =
-    if isExhausted range then
-        None
-    else
-        let rangeStart, rangeEnd = range
-        let dmPlusIndicator, dmMinusIndicator = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
-        if dmMinusIndicator > dmPlusIndicator then
-            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes 0
-        else if changed < DmChangeCount then
-            findBearTrendEndBefore (rangeStart, rangeEnd - 1) quotes (changed + 1)
-        else
-            Some (rangeEnd - 2)
 
+        
 let private findMinsBinary (quotes : Quotation[]) =
     let rec findMinsBinaryImpl range (results : list<Quotation>) =
         let rangeStart, rangeEnd = range
@@ -135,14 +129,14 @@ let private findMinsBinary (quotes : Quotation[]) =
                 quotes
                 |> narrowTo range
                 |> Seq.minBy (fun q -> q.Low)
-            let bullTrendEnd = findBullTrendEndAfter (min.Index, rangeEnd) quotes 0
+            let bullTrendEnd = findTrendAfter Bull (min.Index, rangeEnd) quotes
             let bull = 
                 match bullTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMinsBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bearTrendEnd = findBearTrendEndBefore (rangeStart, min.Index) quotes 0
+            let bearTrendEnd = findTrendBefore Bear (rangeStart, min.Index) quotes
             let bear =
                 match bearTrendEnd with
                 | Some index when index < rangeEnd && index > rangeStart ->

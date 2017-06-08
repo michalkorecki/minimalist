@@ -100,6 +100,7 @@ let ``Extrema are found for WWL in strong bear trend`` () =
         |> loadQuotations
         |> findExtrema
 
+    extrema |> Seq.toArray |> should haveLength 23
     extrema |> shouldContainMax |> at 2016 01 04
     extrema |> shouldContainMin |> at 2016 01 22
     extrema |> shouldContainMax |> at 2016 02 09
