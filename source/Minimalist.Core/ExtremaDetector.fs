@@ -45,40 +45,53 @@ type private Trend =
     | Bear
     | Bull
 
-let private keepSearching = function
-    | Bear -> fun (dmPlus, dmMinus) -> dmMinus > dmPlus
-    | Bull -> fun (dmPlus, dmMinus) -> dmPlus > dmMinus
+type private TrendStatus =
+    | Continues
+    | Reversing
+    | Finished
+
+let private trendStatus (dmPlus, dmMinus) dmReversals = function
+    | Bear when dmMinus > dmPlus ->
+        Continues
+    | Bull when dmPlus > dmMinus ->
+        Continues
+    | _ when dmReversals < DmChangeCount -> 
+        Reversing
+    | _ ->
+        Finished
 
 let private findTrendAfter trend range quotes =
-    let isTrend = keepSearching trend
     let rec findTrendAfterImpl range quotes changed =
         if isExhausted range then
             None
         else
             let rangeStart, rangeEnd = range
             let dm = directionalMovementIndicator rangeStart quotes
-            if isTrend dm then
+            let status = trendStatus dm changed trend
+            match status with
+            | Continues -> 
                 findTrendAfterImpl (rangeStart + 1, rangeEnd) quotes 0
-            else if changed < DmChangeCount then
+            | Reversing ->
                 findTrendAfterImpl (rangeStart + 1, rangeEnd) quotes (changed + 1)
-            else
+            | Finished ->
                 Some (rangeStart + 2)
     
     findTrendAfterImpl range quotes 0
 
 let private findTrendBefore trend range quotes =
-    let isTrend = keepSearching trend
     let rec findTrendBeforeImpl range quotes changed =
         if isExhausted range then
             None
         else
             let rangeStart, rangeEnd = range
             let dm = directionalMovementIndicator (rangeEnd - DmSeekSize) quotes
-            if isTrend dm then
+            let status = trendStatus dm changed trend
+            match status with
+            | Continues ->
                 findTrendBeforeImpl (rangeStart, rangeEnd - 1) quotes 0
-            else if changed < DmChangeCount then
+            | Reversing ->
                 findTrendBeforeImpl (rangeStart, rangeEnd - 1) quotes (changed + 1)
-            else
+            | Finished ->
                 Some (rangeEnd - 2)
     
     findTrendBeforeImpl range quotes 0
