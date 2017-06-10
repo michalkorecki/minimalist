@@ -1,4 +1,4 @@
-﻿module Minimalist.Core.ExtremaDetector
+﻿module Minimalist.Core.Extrema
 
 open Minimalist.Core
 open Minimalist.Core.Data
@@ -10,73 +10,76 @@ let private limitTo (rangeStart, rangeEnd) quotes =
     |> Seq.skip rangeStart
     |> Seq.take (rangeEnd - rangeStart + 1)
 
-let private findMaxesBinary (quotes : Quotation[]) =
-    //todo: make this tail recursive
-    let rec findMaxesBinaryImpl range (results : list<Quotation>)=
-        let rangeStart, rangeEnd = range
-        if rangeStart >= rangeEnd then
-            results
-        else
+let private (|Range|_|) (rangeStart, rangeEnd) = 
+    if rangeStart >= rangeEnd then
+        None
+    else
+        Some (rangeStart, rangeEnd)
+
+let private findMaxes (quotes : Quotation[]) =
+    let rec findMaxesBinary (results : list<Quotation>) = function
+        | Range (rangeStart, rangeEnd) ->
             let max =
                 quotes
-                |> limitTo range
+                |> limitTo (rangeStart, rangeEnd)
                 |> Seq.maxBy (fun q -> q.High)
             let bearTrendReversal = Trend.findReversalForward Trend.Bear (max.Index, rangeEnd) quotes
             let bear = 
                 match bearTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMaxesBinaryImpl (index, rangeEnd) results
+                    findMaxesBinary results (index, rangeEnd)
                 | _ ->
                     []
             let bullTrendReversal = Trend.findReversalBackwards Trend.Bull (rangeStart, max.Index) quotes
             let bull =
                 match bullTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMaxesBinaryImpl (rangeStart, index) results
+                    findMaxesBinary results (rangeStart, index)
                 | _ ->
                     []
 
             List.concat [max::bull;bear]
+        | _ ->
+            results
 
-    findMaxesBinaryImpl (0, quotes.Length - 1) []
+    findMaxesBinary [] (0, quotes.Length - 1) 
     |> Seq.distinct
     |> Seq.toList
 
-let private findMinsBinary (quotes : Quotation[]) =
-    let rec findMinsBinaryImpl range (results : list<Quotation>) =
-        let rangeStart, rangeEnd = range
-        if rangeStart >= rangeEnd then
-            results
-        else
+let private findMins (quotes : Quotation[]) =
+    let rec findMinsImpl (results : list<Quotation>) = function
+        | Range (rangeStart, rangeEnd) ->
             let min =
                 quotes
-                |> limitTo range
+                |> limitTo (rangeStart, rangeEnd)
                 |> Seq.minBy (fun q -> q.Low)
-            let bullTrendEnd = Trend.findReversalForward Trend.Bull (min.Index, rangeEnd) quotes
+            let bullTrendReversal = Trend.findReversalForward Trend.Bull (min.Index, rangeEnd) quotes
             let bull = 
-                match bullTrendEnd with
+                match bullTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMinsBinaryImpl (index, rangeEnd) results
+                    findMinsImpl results (index, rangeEnd)
                 | _ ->
                     []
-            let bearTrendEnd = Trend.findReversalBackwards Trend.Bear (rangeStart, min.Index) quotes
+            let bearTrendReversal = Trend.findReversalBackwards Trend.Bear (rangeStart, min.Index) quotes
             let bear =
-                match bearTrendEnd with
+                match bearTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMinsBinaryImpl (rangeStart, index) results
+                    findMinsImpl results (rangeStart, index)
                 | _ ->
                     []
             
             List.concat [min::bull;bear]
+        | _ ->
+            results
     
-    findMinsBinaryImpl (0, quotes.Length - 1) []
+    findMinsImpl [] (0, quotes.Length - 1)
     |> Seq.distinct
     |> Seq.toList
 
 
 let findExtrema quotations =
-    let mins = findMinsBinary quotations |> Seq.map (fun q -> (Minimum, q))
-    let maxes = findMaxesBinary quotations |> Seq.map (fun q -> (Maximum, q))
+    let mins = findMins quotations |> Seq.map (fun q -> (Minimum, q))
+    let maxes = findMaxes quotations |> Seq.map (fun q -> (Maximum, q))
     [mins;maxes]
     |> Seq.concat
     |> Seq.sortBy (fun (_, q) -> q.Date)

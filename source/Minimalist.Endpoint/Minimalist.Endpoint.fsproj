@@ -55,7 +55,7 @@
   <Import Project="$(FSharpTargetsPath)" />
   <ItemGroup>
     <Compile Include="AssemblyInfo.fs" />
-    <Compile Include="ExtremaDetectorAdapter.fs" />
+    <Compile Include="ExtremaAdapter.fs" />
     <Compile Include="ExtremaModule.fs" />
     <Compile Include="Host.fs" />
     <Compile Include="Program.fs" />
