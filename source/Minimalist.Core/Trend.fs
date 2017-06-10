@@ -5,19 +5,25 @@ module Trend =
     open Minimalist.Core.Indicators
 
     [<Literal>]
-    let private DmSeekSize = 5
+    let private SearchSpaceSize = 5
 
     [<Literal>]
     let private DmReversalsLimit = 2
 
     type private TrendState =
-    | Continues
-    | Reversing
-    | Finished
+        | Continues
+        | Reversing
+        | Finished
 
     type TrendType =
         | Bear
         | Bull
+
+    let private (|Range|_|) (rangeStart, rangeEnd) = 
+        if rangeStart + SearchSpaceSize > rangeEnd then
+            None
+        else
+            Some (rangeStart, rangeEnd)
 
     let private trendState dmReversals trend quotes = 
         let dmPlus, dmMinus = directionalMovementIndicator quotes
@@ -31,47 +37,42 @@ module Trend =
         | _ ->
             Finished
 
-    let private isExhausted (rangeStart, rangeEnd) =
-        rangeStart + DmSeekSize > rangeEnd
-
     let findReversalForward trend range quotes =
-        let rec findReversalForwardImpl range quotes reversals =
-            if isExhausted range then
-                None
-            else
-                let rangeStart, rangeEnd = range
+        let rec findReversalForwardImpl quotes reversals = function
+            | Range (rangeStart, rangeEnd) -> 
                 let state =
                     quotes
                     |> Seq.skip rangeStart
-                    |> Seq.take (DmSeekSize + 1)
+                    |> Seq.take (SearchSpaceSize + 1)
                     |> trendState reversals trend
                 match state with
                 | Continues -> 
-                    findReversalForwardImpl (rangeStart + 1, rangeEnd) quotes 0
+                    findReversalForwardImpl quotes 0 (rangeStart + 1, rangeEnd) 
                 | Reversing ->
-                    findReversalForwardImpl (rangeStart + 1, rangeEnd) quotes (reversals + 1)
+                    findReversalForwardImpl quotes (reversals + 1) (rangeStart + 1, rangeEnd)
                 | Finished ->
                     Some (rangeStart + 2)
+            | _ ->
+                None
     
-        findReversalForwardImpl range quotes 0
+        findReversalForwardImpl quotes 0 range
 
     let findReversalBackwards trend range quotes =
-        let rec findReversalBackwardsImpl range quotes reversals =
-            if isExhausted range then
-                None
-            else
-                let rangeStart, rangeEnd = range
+        let rec findReversalBackwardsImpl quotes reversals = function
+            | Range (rangeStart, rangeEnd) -> 
                 let state =
                     quotes
-                    |> Seq.skip (rangeEnd - DmSeekSize)
-                    |> Seq.take (DmSeekSize + 1)
+                    |> Seq.skip (rangeEnd - SearchSpaceSize)
+                    |> Seq.take (SearchSpaceSize + 1)
                     |> trendState reversals trend
                 match state with
                 | Continues ->
-                    findReversalBackwardsImpl (rangeStart, rangeEnd - 1) quotes 0
+                    findReversalBackwardsImpl quotes 0 (rangeStart, rangeEnd - 1)
                 | Reversing ->
-                    findReversalBackwardsImpl (rangeStart, rangeEnd - 1) quotes (reversals + 1)
+                    findReversalBackwardsImpl quotes (reversals + 1) (rangeStart, rangeEnd - 1)
                 | Finished ->
                     Some (rangeEnd - 2)
+            | _ ->
+                None
     
-        findReversalBackwardsImpl range quotes 0
+        findReversalBackwardsImpl quotes 0 range

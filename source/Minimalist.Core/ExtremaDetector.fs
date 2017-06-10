@@ -5,10 +5,7 @@ open Minimalist.Core.Data
 open System
 
 
-
-
-//todo: limit to
-let private narrowTo (rangeStart, rangeEnd) quotes =
+let private limitTo (rangeStart, rangeEnd) quotes =
     quotes
     |> Seq.skip rangeStart
     |> Seq.take (rangeEnd - rangeStart + 1)
@@ -22,18 +19,18 @@ let private findMaxesBinary (quotes : Quotation[]) =
         else
             let max =
                 quotes
-                |> narrowTo range
+                |> limitTo range
                 |> Seq.maxBy (fun q -> q.High)
-            let bearTrendEnd = Trend.findReversalForward Trend.Bear (max.Index, rangeEnd) quotes
+            let bearTrendReversal = Trend.findReversalForward Trend.Bear (max.Index, rangeEnd) quotes
             let bear = 
-                match bearTrendEnd with
+                match bearTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMaxesBinaryImpl (index, rangeEnd) results
                 | _ ->
                     []
-            let bullTrendEnd = Trend.findReversalBackwards Trend.Bull (rangeStart, max.Index) quotes
+            let bullTrendReversal = Trend.findReversalBackwards Trend.Bull (rangeStart, max.Index) quotes
             let bull =
-                match bullTrendEnd with
+                match bullTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
                     findMaxesBinaryImpl (rangeStart, index) results
                 | _ ->
@@ -53,7 +50,7 @@ let private findMinsBinary (quotes : Quotation[]) =
         else
             let min =
                 quotes
-                |> narrowTo range
+                |> limitTo range
                 |> Seq.minBy (fun q -> q.Low)
             let bullTrendEnd = Trend.findReversalForward Trend.Bull (min.Index, rangeEnd) quotes
             let bull = 
