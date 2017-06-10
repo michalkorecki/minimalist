@@ -46,6 +46,7 @@
     <Compile Include="AssemblyInfo.fs" />
     <Compile Include="Data.fs" />
     <Compile Include="Indicators.fs" />
+    <Compile Include="Trend.fs" />
     <Compile Include="ExtremaDetector.fs" />
   </ItemGroup>
   <PropertyGroup>

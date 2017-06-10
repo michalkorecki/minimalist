@@ -21,4 +21,21 @@ let directionalMovement yesterday today =
             highsDistance
         else
             lowsDistance
+
+let directionalMovementIndicator quotes =
+    let pairs = quotes |> Seq.pairwise
+    let trueRange =
+        pairs
+        |> Seq.map (fun (yesterday, today) -> trueRange yesterday today)
+        |> Seq.sum
+    let dmPlus, dmMinus =
+        pairs
+        |> Seq.map (fun (yesterday, today) -> directionalMovement yesterday today)
+        |> Seq.fold (fun (plus, minus) element ->
+            if element > 0.0 then
+                (plus + element, minus)
+            else
+                (plus, minus + element * -1.0)) (0.0, 0.0)
+
+    (dmPlus / trueRange, dmMinus / trueRange)
     
