@@ -17,7 +17,7 @@ let private (|Range|_|) (rangeStart, rangeEnd) =
         Some (rangeStart, rangeEnd)
 
 let private findMaxes (quotes : Quotation[]) =
-    let rec findMaxesBinary (results : list<Quotation>) = function
+    let rec findMaxesImpl (results : list<Quotation>) = function
         | Range (rangeStart, rangeEnd) ->
             let max =
                 quotes
@@ -27,14 +27,14 @@ let private findMaxes (quotes : Quotation[]) =
             let bear = 
                 match bearTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMaxesBinary results (index, rangeEnd)
+                    findMaxesImpl results (index, rangeEnd)
                 | _ ->
                     []
             let bullTrendReversal = Trend.findReversalBackwards Trend.Bull (rangeStart, max.Index) quotes
             let bull =
                 match bullTrendReversal with
                 | Some index when index < rangeEnd && index > rangeStart ->
-                    findMaxesBinary results (rangeStart, index)
+                    findMaxesImpl results (rangeStart, index)
                 | _ ->
                     []
 
@@ -42,7 +42,7 @@ let private findMaxes (quotes : Quotation[]) =
         | _ ->
             results
 
-    findMaxesBinary [] (0, quotes.Length - 1) 
+    findMaxesImpl [] (0, quotes.Length - 1) 
     |> Seq.distinct
     |> Seq.toList
 
