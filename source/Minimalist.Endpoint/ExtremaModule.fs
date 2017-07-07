@@ -17,7 +17,7 @@ type ExtremaModule() as self =
     do
         self.Get.[@"extrema/(?i)(?<ticker>[A-Z0-9\.]{2,})/(?<year>[0-9]{4})"] <- fun parameters ->
             self.getExtrema parameters self.fromYearRange
-        self.Get.[@"extrema/(?i)(?<ticker>[A-Z0-9\.]{2,})/(?i)(?<range>3-months|6-months|year)"] <- fun parameters ->
+        self.Get.[@"extrema/(?i)(?<ticker>[A-Z0-9\.]{2,})/(?i)(?<range>3-months|6-months|year|all)"] <- fun parameters ->
             self.getExtrema parameters self.fromPredefinedRange
 
     member private self.fromYearRange parameters =
@@ -32,6 +32,7 @@ type ExtremaModule() as self =
             | "3-months" -> rangeEnd.AddMonths(-3)
             | "6-months" -> rangeEnd.AddMonths(-6)
             | "year" -> rangeEnd.AddYears(-1)
+            | "all" -> new DateTime(1900, 1, 1)
             | _ -> rangeEnd.AddYears(-1)
         (rangeStart, rangeEnd)
 
